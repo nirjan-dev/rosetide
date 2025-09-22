@@ -9,9 +9,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "outDir": "./dist",
-    "declaration": true,
-    "emitDeclarationOnly": true
+    "declaration": true
   },
-  "exclude": ["node_modules"],
-  "include": ["src/routes/index.ts"]
+  "exclude": ["node_modules"]
 }
