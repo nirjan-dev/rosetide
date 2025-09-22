@@ -1,27 +1,18 @@
-import { createEnv } from '@t3-oss/env-core'
-import { z } from 'zod'
-
-export const env = createEnv({
+import { createEnv } from "@t3-oss/env-core";
+import { z } from "zod";
+import type {Context} from 'hono'
+import {env} from 'hono/adapter'
+export const getEnv = (c:Context) => createEnv({
   server: {
-    SERVER_URL: z.string().url().optional(),
+    FRONTEND_URL: z.string().url(),
   },
 
-  /**
-   * The prefix that client-side variables must have. This is enforced both at
-   * a type-level and at runtime.
-   */
-  clientPrefix: 'VITE_',
-
-  client: {
-    VITE_APP_TITLE: z.string().min(1).optional(),
-    VITE_API_BASE: z.string().url()
-  },
 
   /**
    * What object holds the environment variables at runtime. This is usually
    * `process.env` or `import.meta.env`.
    */
-  runtimeEnv: import.meta.env,
+  runtimeEnv: env(c),
 
   /**
    * By default, this library will feed the environment variables directly to
@@ -37,4 +28,4 @@ export const env = createEnv({
    * explicitly specify this option as true.
    */
   emptyStringAsUndefined: true,
-})
+});

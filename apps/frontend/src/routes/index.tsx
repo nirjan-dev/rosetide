@@ -2,11 +2,14 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { AppType } from '@periodos/backend/routes'
 import { hc } from 'hono/client'
+import { env } from '@/env'
 export const Route = createFileRoute('/')({
   component: App,
 })
 
-const client = hc<AppType>('http://localhost:3000')
+const BASE_API = env.VITE_API_BASE
+
+const client = hc<AppType>(BASE_API)
 
 function App() {
   const { data, isLoading } = useQuery({
@@ -16,7 +19,7 @@ function App() {
 
   async function getUsers() {
     try {
-      const data = await client.users.$get()
+      const data = await client.api.v1.users.$get()
       if (data.ok) {
         const { users } = await data.json()
         return users
