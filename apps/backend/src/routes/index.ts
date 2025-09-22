@@ -3,7 +3,7 @@ import usersRoute from "./users.js";
 import { cors } from "hono/cors";
 import {getEnv} from '../env.js'
 const app = new Hono().basePath('/api/v1').use("*", cors({
-  origin: (origin, c) => {
+  origin: (_origin, c) => {
     const {FRONTEND_URL} = getEnv(c)
     return FRONTEND_URL
   },
