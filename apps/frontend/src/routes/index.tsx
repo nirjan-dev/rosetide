@@ -1,39 +1,42 @@
 import { createFileRoute } from '@tanstack/react-router'
-import logo from '../logo.svg'
-
+import { useQuery } from '@tanstack/react-query'
+import type { AppType } from '@periodos/backend/routes'
+import { hc } from 'hono/client'
 export const Route = createFileRoute('/')({
   component: App,
 })
 
+const client = hc<AppType>('http://localhost:3000')
+
 function App() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+  })
+
+  async function getUsers() {
+    try {
+      const data = await client.users.$get()
+      if (data.ok) {
+        const { users } = await data.json()
+        return users
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <div className="text-center">
-      <header className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white text-[calc(10px+2vmin)]">
-        <img
-          src={logo}
-          className="h-[40vmin] pointer-events-none animate-[spin_20s_linear_infinite]"
-          alt="logo"
-        />
-        <p>
-          Edit <code>src/routes/index.tsx</code> and save to reload.
-        </p>
-        <a
-          className="text-[#61dafb] hover:underline"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <a
-          className="text-[#61dafb] hover:underline"
-          href="https://tanstack.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn TanStack
-        </a>
-      </header>
+      <h1>Periodos app</h1>
+
+      {isLoading ? <div>Loading...</div> : <div>{data?.length} users</div>}
+
+      {data?.map((user) => (
+        <div key={user.id}>
+          <h2>{user.name}</h2>
+        </div>
+      ))}
     </div>
   )
 }
