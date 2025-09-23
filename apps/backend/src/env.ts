@@ -1,17 +1,17 @@
-import { createEnv } from "@t3-oss/env-core";
-import { z } from "zod";
-import type {Context} from 'hono'
-import {env} from 'hono/adapter'
-export const getEnv = (c:Context) => createEnv({
+import { createEnv } from '@t3-oss/env-core'
+import type { Context } from 'hono'
+import { env } from 'hono/adapter'
+import { z } from 'zod'
+export const getEnv = (c: Context) => createEnv({
   server: {
     FRONTEND_URL: z.string().url(),
   },
-
 
   /**
    * What object holds the environment variables at runtime. This is usually
    * `process.env` or `import.meta.env`.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   runtimeEnv: env(c),
 
   /**
@@ -28,4 +28,4 @@ export const getEnv = (c:Context) => createEnv({
    * explicitly specify this option as true.
    */
   emptyStringAsUndefined: true,
-});
+})

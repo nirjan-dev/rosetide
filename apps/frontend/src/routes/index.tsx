@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import type { AppType } from '@periodos/backend/routes'
 import { hc } from 'hono/client'
+import type { AppType } from '@periodos/backend/routes'
 import { env } from '@/env'
+
 export const Route = createFileRoute('/')({
   component: App,
 })
@@ -19,23 +20,32 @@ function App() {
 
   async function getUsers() {
     try {
-      const data = await client.api.v1.users.$get()
-      if (data.ok) {
-        const { users } = await data.json()
-        return users
-      }
-    } catch (error) {
+      const response = await client.api.v1.users.$get()
+      const { users } = await response.json()
+      return users
+    }
+    catch (error) {
       console.error(error)
     }
   }
 
   return (
     <div className="text-center">
-      <h1>Periodos app</h1>
+      <h1>
+        Periodos app
+      </h1>
 
-      {isLoading ? <div>Loading...</div> : <div>{data?.length} users</div>}
+      {isLoading
+        ? <div>Loading...</div>
+        : (
+            <div>
+              {data?.length}
+              {' '}
+              users
+            </div>
+          )}
 
-      {data?.map((user) => (
+      {data?.map(user => (
         <div key={user.id}>
           <h2>{user.name}</h2>
         </div>

@@ -1,30 +1,27 @@
-import { Hono } from "hono"
-
-
+import { Hono } from 'hono'
 
 const users = [
   {
     id: 1,
-    name: 'nirjan'
+    name: 'nirjan',
   },
   {
     id: 2,
-    name: 'neha'
-  }
+    name: 'neha',
+  },
 ]
-const usersRoute = new Hono().get('/', c => {
+const usersRoute = new Hono().get('/', (c) => {
   return c.json({
-    users
+    users,
   }, 200)
-}).get('/:id', c => {
+}).get('/:id', (c) => {
   const id = c.req.param('id')
 
   const user = users.find(user => user.id === parseInt(id))
 
   return c.json({
-    user
+    user,
   }, 200)
 })
-
 
 export default usersRoute
