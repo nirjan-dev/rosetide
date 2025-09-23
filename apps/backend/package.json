@@ -21,5 +21,8 @@
   },
   "exports": {
     "./routes": "./src/routes/index.ts"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }
