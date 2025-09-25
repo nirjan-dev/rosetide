@@ -5,6 +5,7 @@ import { z } from 'zod'
 export const getEnv = (c: Context) => createEnv({
   server: {
     FRONTEND_URL: z.string().url(),
+    DB_FILE_NAME: z.string().url(),
   },
 
   /**

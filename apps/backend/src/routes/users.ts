@@ -1,24 +1,18 @@
+import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { getDB } from '../lib/db/index.js'
+import { demoUsersTable } from '../lib/db/schema.js'
 
-const users = [
-  {
-    id: 1,
-    name: 'nirjan',
-  },
-  {
-    id: 2,
-    name: 'neha',
-  },
-]
-const usersRoute = new Hono().get('/', (c) => {
+const usersRoute = new Hono().get('/', async (c) => {
+  const db = getDB(c)
+  const users = await db.select().from(demoUsersTable).all()
   return c.json({
     users,
   }, 200)
-}).get('/:id', (c) => {
+}).get('/:id', async (c) => {
   const id = c.req.param('id')
-
-  const user = users.find(user => user.id === parseInt(id))
-
+  const db = getDB(c)
+  const user = await db.select().from(demoUsersTable).where(eq(demoUsersTable.id, Number(id)))
   return c.json({
     user,
   }, 200)
