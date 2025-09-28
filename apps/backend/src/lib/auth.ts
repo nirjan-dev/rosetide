@@ -22,7 +22,7 @@ export const auth = (c: Context) => betterAuth({
   advanced: {
     crossSubDomainCookies: {
       enabled: true,
-      domain: getEnv(c).FRONTEND_URL.replace(/^https?:\/\//, ''),
+      domain: getEnv(c).COOKIE_DOMAIN,
     },
   },
 })
