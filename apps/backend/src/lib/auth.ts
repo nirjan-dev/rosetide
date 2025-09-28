@@ -20,11 +20,9 @@ export const auth = (c: Context) => betterAuth({
     getEnv(c).FRONTEND_URL,
   ],
   advanced: {
-    // TODO: remove when you start using the same domain/subdomain for backend and frontend
-    defaultCookieAttributes: {
-      sameSite: 'None',
-      secure: true,
-      httpOnly: true,
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: getEnv(c).FRONTEND_URL.replace(/^https?:\/\//, ''),
     },
   },
 })
