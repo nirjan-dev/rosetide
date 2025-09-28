@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import type { User } from 'better-auth'
 import { authClient } from '@/lib/auth-client'
+import { PeriodTracker } from '@/components/PeriodTracker/PeriodTracker'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -59,11 +60,8 @@ function App() {
       </div>
 
       {user && (
-        <div className="stats shadow">
-          <div className="stat">
-            <div className="stat-title">Logged in as</div>
-            <div className="stat-value">{ user.name}</div>
-          </div>
+        <div className="mt-8">
+          <PeriodTracker />
         </div>
       ) }
 

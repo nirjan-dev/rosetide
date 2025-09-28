@@ -10,7 +10,7 @@ import {
 import { calculateCycleInfo, calculateAverageCycleLength } from '../lib/period-calculations.js'
 import type { AppVariables } from '../types/hono.types.js'
 
-const periodTrackerRoute = new Hono <{ Variables: AppVariables }>().post('/', auth, async (c) => {
+const periodTrackerRoute = new Hono <{ Variables: AppVariables }>().post('/', async (c) => {
   const authUser = c.get('user')
   if (!authUser?.id) {
     return c.json({ error: 'Unauthorized' }, 401)
@@ -40,7 +40,7 @@ const periodTrackerRoute = new Hono <{ Variables: AppVariables }>().post('/', au
     console.error('Error creating period:', error)
     return c.json({ error: 'Failed to create period' }, 500)
   }
-}).put('/end', auth, async (c) => {
+}).put('/end', async (c) => {
   const authUser = c.get('user')
   if (!authUser?.id) {
     return c.json({ error: 'Unauthorized' }, 401)
@@ -69,7 +69,7 @@ const periodTrackerRoute = new Hono <{ Variables: AppVariables }>().post('/', au
     console.error('Error ending period:', error)
     return c.json({ error: 'Failed to end period' }, 500)
   }
-}).get('/', auth, async (c) => {
+}).get('/', async (c) => {
   const authUser = c.get('user')
   if (!authUser?.id) {
     return c.json({ error: 'Unauthorized' }, 401)
@@ -102,7 +102,7 @@ const periodTrackerRoute = new Hono <{ Variables: AppVariables }>().post('/', au
     console.error('Error fetching periods:', error)
     return c.json({ error: 'Failed to fetch periods' }, 500)
   }
-}).get('/active', auth, async (c) => {
+}).get('/active', async (c) => {
   const authUser = c.get('user')
   if (!authUser?.id) {
     return c.json({ error: 'Unauthorized' }, 401)

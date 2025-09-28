@@ -6,4 +6,5 @@ import { schema } from './schema.js'
 
 export const getDB = (c: Context) => drizzle(getEnv(c).DB_FILE_NAME, {
   schema: schema,
+  logger: true,
 })
