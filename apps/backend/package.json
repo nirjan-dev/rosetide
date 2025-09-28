@@ -36,6 +36,7 @@
     "./routes": "./src/routes/index.ts"
   },
   "files": [
-    "dist"
+    "dist",
+    "migrations"
   ]
 }

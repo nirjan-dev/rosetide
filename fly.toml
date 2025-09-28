@@ -18,3 +18,7 @@ primary_region = 'hkg'
 
 [[vm]]
   size = 'shared-cpu-1x'
+
+[[mounts]]
+source = 'data'
+destination = '/app/data'

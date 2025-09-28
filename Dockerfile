@@ -43,4 +43,6 @@ ENV NODE_ENV="production"
 COPY --from=build /app/output /app
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-CMD [ "dist/index.js" ]
+# use this command when using node slim
+ # CMD [ "npm", "run", "start" ]
+CMD ["dist/index.js" ]
