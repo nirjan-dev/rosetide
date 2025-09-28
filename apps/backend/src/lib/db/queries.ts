@@ -1,6 +1,7 @@
-import { eq, and, desc, lt, gte } from 'drizzle-orm'
-import { period } from './schema'
+import { eq, and, desc, isNotNull, isNull } from 'drizzle-orm'
 import type { LibSQLDatabase } from 'drizzle-orm/libsql'
+import type { schema } from './schema.js'
+import { period } from './schema.js'
 
 export interface Period {
   id: string
@@ -11,7 +12,7 @@ export interface Period {
   updatedAt: Date
 }
 
-export const createPeriod = async (db: LibSQLDatabase<any>, data: { userId: string; startDate: Date }) => {
+export const createPeriod = async (db: LibSQLDatabase<typeof schema>, data: { userId: string, startDate: Date }) => {
   const result = await db.insert(period).values({
     id: crypto.randomUUID(),
     userId: data.userId,
@@ -23,7 +24,7 @@ export const createPeriod = async (db: LibSQLDatabase<any>, data: { userId: stri
   return result[0]
 }
 
-export const updatePeriod = async (db: LibSQLDatabase<any>, id: string, data: { endDate: Date }) => {
+export const updatePeriod = async (db: LibSQLDatabase<typeof schema>, id: string, data: { endDate: Date }) => {
   const result = await db.update(period)
     .set({
       endDate: data.endDate,
@@ -35,26 +36,30 @@ export const updatePeriod = async (db: LibSQLDatabase<any>, id: string, data: { 
   return result[0]
 }
 
-export const getActivePeriod = async (db: LibSQLDatabase<any>, userId: string) => {
+export const getActivePeriod = async (db: LibSQLDatabase<typeof schema>, userId: string) => {
   const result = await db.select()
     .from(period)
     .where(and(
       eq(period.userId, userId),
-      eq(period.endDate, null)
+      isNull(period.endDate),
     ))
     .limit(1)
 
-  return result[0] || null
+  if (result.length === 0) {
+    return null
+  }
+
+  return result[0]
 }
 
-export const getPeriods = async (db: LibSQLDatabase<any>, userId: string) => {
+export const getPeriods = async (db: LibSQLDatabase<typeof schema>, userId: string) => {
   return await db.select()
     .from(period)
     .where(eq(period.userId, userId))
     .orderBy(desc(period.startDate))
 }
 
-export const getPeriodById = async (db: LibSQLDatabase<any>, id: string) => {
+export const getPeriodById = async (db: LibSQLDatabase<typeof schema>, id: string) => {
   const result = await db.select()
     .from(period)
     .where(eq(period.id, id))
@@ -63,12 +68,12 @@ export const getPeriodById = async (db: LibSQLDatabase<any>, id: string) => {
   return result[0] || null
 }
 
-export const getPastPeriods = async (db: LibSQLDatabase<any>, userId: string, limit: number = 10) => {
+export const getPastPeriods = async (db: LibSQLDatabase<typeof schema>, userId: string, limit: number = 10) => {
   return await db.select()
     .from(period)
     .where(and(
       eq(period.userId, userId),
-      period.endDate.isNotNull()
+      isNotNull(period.endDate),
     ))
     .orderBy(desc(period.startDate))
     .limit(limit)

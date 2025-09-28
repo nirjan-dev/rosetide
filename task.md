@@ -60,10 +60,10 @@ packages/backend/src/
 ├── routes/
 │   └── period-tracker.ts (Hono RPC routes for period tracking)
 └── lib/
-    └── period-calculations.ts (cycle calculation logic)
-├──   db/
-│     ├── schema.ts (Drizzle schema for period tracking)
-│     └── queries.ts (database queries for period data)
+    ├── period-calculations.ts (cycle calculation logic)
+    └── db/
+        ├── schema.ts (Drizzle schema for period tracking)
+        └── queries.ts (database queries for period data)
 ```
 
 ## Business Rules
