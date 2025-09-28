@@ -8,7 +8,7 @@ primary_region = 'hkg'
 
 [env]
 FRONTEND_URL = "https://periodos.nirjan.net"
-COOKIE_DOMAIN = "https://nirjan.net"
+COOKIE_DOMAIN = "nirjan.net"
 
 [build]
 

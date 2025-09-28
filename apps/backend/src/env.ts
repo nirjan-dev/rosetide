@@ -6,7 +6,7 @@ export const getEnv = (c: Context) => createEnv({
   server: {
     FRONTEND_URL: z.string().url(),
     DB_FILE_NAME: z.string().url(),
-    COOKIE_DOMAIN: z.string().url(),
+    COOKIE_DOMAIN: z.string(),
     BETTER_AUTH_SECRET: z.string(),
     BETTER_AUTH_URL: z.string().url(),
     GOOGLE_CLIENT_ID: z.string(),
