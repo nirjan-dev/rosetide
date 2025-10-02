@@ -2,21 +2,24 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { getEnv } from '@/env.js'
 import { auth } from '@/lib/auth.js'
+import { logger } from '@/middleware/logger.js'
 import periodTrackerRoute from '@/modules/period-tracker/routes.js'
 import usersRoute from '@/routes/users.js'
 import type { AppVariables } from '@/types/hono.types.js'
 
-const app = new Hono<{ Variables: AppVariables }>().use('*', cors({
-  origin: (_origin, c) => {
-    const { FRONTEND_URL } = getEnv(c)
-    return FRONTEND_URL
-  },
-  allowHeaders: ['Content-Type', 'Authorization'],
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  exposeHeaders: ['Content-Length'],
-  maxAge: 600,
-  credentials: true,
-}))
+const app = new Hono<{ Variables: AppVariables }>()
+  .use(logger())
+  .use('*', cors({
+    origin: (_origin, c) => {
+      const { FRONTEND_URL } = getEnv(c)
+      return FRONTEND_URL
+    },
+    allowHeaders: ['Content-Type', 'Authorization'],
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    exposeHeaders: ['Content-Length'],
+    maxAge: 600,
+    credentials: true,
+  }))
   .use('*', async (c, next) => {
     const session = await auth(c).api.getSession({ headers: c.req.raw.headers })
     if (!session) {

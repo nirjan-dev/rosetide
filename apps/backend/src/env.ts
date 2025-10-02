@@ -11,6 +11,7 @@ export const getEnv = (c: Context) => createEnv({
     BETTER_AUTH_URL: z.string().url(),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
+    LOG_LEVEL: z.string().optional(),
   },
 
   /**
