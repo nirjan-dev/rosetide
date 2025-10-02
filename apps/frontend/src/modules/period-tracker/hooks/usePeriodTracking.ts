@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { periodsClient } from '../lib/hono-client'
 import type { InferResponseType } from 'hono/client'
+import { periodsClient } from '@/lib/hono-client'
 
 // Define types based on Hono client return types
 type PeriodsResponse = InferResponseType<typeof periodsClient.$get, 200>

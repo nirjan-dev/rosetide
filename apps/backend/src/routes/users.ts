@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { getDB } from '../lib/db/index.js'
-import { user as usersTable } from '../lib/db/schema.js'
+import { getDB } from '@/lib/db/index.js'
+import { user as usersTable } from '@/lib/db/schema.js'
 
 const usersRoute = new Hono().get('/', async (c) => {
   const db = getDB(c)

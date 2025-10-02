@@ -1,10 +1,11 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { getEnv } from '../env.js'
-import { auth } from '../lib/auth.js'
-import type { AppVariables } from '../types/hono.types.js'
-import periodTrackerRoute from './period-tracker.js'
-import usersRoute from './users.js'
+import { getEnv } from '@/env.js'
+import { auth } from '@/lib/auth.js'
+import periodTrackerRoute from '@/modules/period-tracker/routes.js'
+import usersRoute from '@/routes/users.js'
+import type { AppVariables } from '@/types/hono.types.js'
+
 const app = new Hono<{ Variables: AppVariables }>().use('*', cors({
   origin: (_origin, c) => {
     const { FRONTEND_URL } = getEnv(c)

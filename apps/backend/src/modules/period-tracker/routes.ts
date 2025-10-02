@@ -1,20 +1,17 @@
 import { Hono } from 'hono'
-import { auth } from '../lib/auth.js'
-import { getDB } from '../lib/db/index.js'
 import {
   createPeriod,
   updatePeriod,
   getActivePeriod,
   getPeriods,
-} from '../lib/db/queries.js'
-import { calculateCycleInfo, calculateAverageCycleLength } from '../lib/period-calculations.js'
-import type { AppVariables } from '../types/hono.types.js'
+} from './db/period-tracker-queries.js'
+import { getDB } from '@/lib/db/index.js'
+import { calculateCycleInfo, calculateAverageCycleLength } from '@/lib/period-calculations.js'
+import { authGuard } from '@/middleware/auth-guard.js'
+import type { AuthGuardAppVariables } from '@/types/hono.types.js'
 
-const periodTrackerRoute = new Hono <{ Variables: AppVariables }>().post('/', async (c) => {
+const periodTrackerRoute = new Hono <{ Variables: AuthGuardAppVariables }>().use('*', authGuard).post('/', async (c) => {
   const authUser = c.get('user')
-  if (!authUser?.id) {
-    return c.json({ error: 'Unauthorized' }, 401)
-  }
 
   try {
     const db = getDB(c)
@@ -42,9 +39,6 @@ const periodTrackerRoute = new Hono <{ Variables: AppVariables }>().post('/', as
   }
 }).put('/end', async (c) => {
   const authUser = c.get('user')
-  if (!authUser?.id) {
-    return c.json({ error: 'Unauthorized' }, 401)
-  }
 
   try {
     const db = getDB(c)
@@ -71,9 +65,6 @@ const periodTrackerRoute = new Hono <{ Variables: AppVariables }>().post('/', as
   }
 }).get('/', async (c) => {
   const authUser = c.get('user')
-  if (!authUser?.id) {
-    return c.json({ error: 'Unauthorized' }, 401)
-  }
 
   try {
     const db = getDB(c)
@@ -104,9 +95,6 @@ const periodTrackerRoute = new Hono <{ Variables: AppVariables }>().post('/', as
   }
 }).get('/active', async (c) => {
   const authUser = c.get('user')
-  if (!authUser?.id) {
-    return c.json({ error: 'Unauthorized' }, 401)
-  }
 
   try {
     const db = getDB(c)

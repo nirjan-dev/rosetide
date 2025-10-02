@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { serve } from '@hono/node-server'
-import { runMigrations } from './lib/db/migrate.js'
-import app from './routes/index.js'
+import { runMigrations } from '@/lib/db/migrate.js'
+import app from '@/routes/index.js'
 try {
   await runMigrations()
   console.log('Migrations completed')

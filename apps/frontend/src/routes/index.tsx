@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import type { User } from 'better-auth'
 import { authClient } from '@/lib/auth-client'
-import { PeriodTracker } from '@/components/PeriodTracker/PeriodTracker'
+import { PeriodTracker } from '@/modules/period-tracker'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -10,9 +10,13 @@ export const Route = createFileRoute('/')({
 
 function App() {
   const [user, setUser] = React.useState<null | User>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
-    authClient.getSession().then(session => setUser(session.data?.user ?? null))
+    authClient.getSession().then((session) => {
+      setUser(session.data?.user ?? null)
+      setIsLoading(false)
+    })
   }, [])
 
   async function handleSignIn() {
@@ -48,6 +52,19 @@ function App() {
         </button>
       )
 
+  if (isLoading) {
+    return (
+      <div className="text-center py-6 grid gap-4 container mx-auto">
+        <h1 className="font-bold text-3xl">
+          Periodos app
+        </h1>
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="text-center py-6 grid gap-4 container mx-auto">
       <h1 className="font-bold text-3xl">
@@ -55,7 +72,6 @@ function App() {
       </h1>
 
       <div>
-
         {buttonToShow}
       </div>
 
@@ -63,8 +79,7 @@ function App() {
         <div className="mt-8">
           <PeriodTracker />
         </div>
-      ) }
-
+      )}
     </div>
   )
 }

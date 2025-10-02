@@ -1,9 +1,9 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import type { Context } from 'hono'
-import { getEnv } from '../env.js'
-import { getDB } from './db/index.js'
-import { schema } from './db/schema.js'
+import { getEnv } from '@/env.js'
+import { getDB } from '@/lib/db/index.js'
+import { schema } from '@/lib/db/schema.js'
 
 export const auth = (c: Context) => betterAuth({
   database: drizzleAdapter(getDB(c), {

@@ -1,7 +1,7 @@
 import { eq, and, desc, isNotNull, isNull } from 'drizzle-orm'
 import type { LibSQLDatabase } from 'drizzle-orm/libsql'
-import type { schema } from './schema.js'
-import { period } from './schema.js'
+import type { schema } from '@/lib/db/schema.js'
+import { period } from '@/lib/db/schema.js'
 
 export interface Period {
   id: string
