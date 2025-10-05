@@ -1,29 +1,23 @@
 import { Hono } from 'hono'
-import {
-  createPeriod,
-  updatePeriod,
-  getActivePeriod,
-  getPeriods,
-} from './db/period-tracker-queries.js'
 import { getDB } from '@/lib/db/index.js'
 import { calculateCycleInfo, calculateAverageCycleLength } from '@/lib/period-calculations.js'
 import { authGuard } from '@/middleware/auth-guard.js'
+import { PeriodTrackerService } from '@/modules/period-tracker/period-tracker.service.js'
 import type { AuthGuardAppVariables } from '@/types/hono.types.js'
 
 const periodTrackerRoute = new Hono <{ Variables: AuthGuardAppVariables }>().use('*', authGuard).post('/', async (c) => {
   const authUser = c.get('user')
-
   try {
     const db = getDB(c)
 
     // Check if user already has an active period
-    const activePeriod = await getActivePeriod(db, authUser.id)
+    const activePeriod = await PeriodTrackerService.getActivePeriod(db, authUser.id)
     if (activePeriod) {
       return c.json({ error: 'User already has an active period' }, 400)
     }
 
     // Create new period
-    const newPeriod = await createPeriod(db, {
+    const newPeriod = await PeriodTrackerService.createPeriod(db, {
       userId: authUser.id,
       startDate: new Date(),
     })
@@ -44,13 +38,13 @@ const periodTrackerRoute = new Hono <{ Variables: AuthGuardAppVariables }>().use
     const db = getDB(c)
 
     // Get active period
-    const activePeriod = await getActivePeriod(db, authUser.id)
+    const activePeriod = await PeriodTrackerService.getActivePeriod(db, authUser.id)
     if (!activePeriod) {
       return c.json({ error: 'No active period found' }, 400)
     }
 
     // End the period
-    const updatedPeriod = await updatePeriod(db, activePeriod.id, {
+    const updatedPeriod = await PeriodTrackerService.updatePeriod(db, activePeriod.id, {
       endDate: new Date(),
     })
 
@@ -68,7 +62,7 @@ const periodTrackerRoute = new Hono <{ Variables: AuthGuardAppVariables }>().use
 
   try {
     const db = getDB(c)
-    const periods = await getPeriods(db, authUser.id)
+    const periods = await PeriodTrackerService.getPeriods(db, authUser.id)
 
     // Calculate cycle information for each period
     const periodsWithInfo = periods.map((period, index) => {
@@ -98,13 +92,13 @@ const periodTrackerRoute = new Hono <{ Variables: AuthGuardAppVariables }>().use
 
   try {
     const db = getDB(c)
-    const activePeriod = await getActivePeriod(db, authUser.id)
+    const activePeriod = await PeriodTrackerService.getActivePeriod(db, authUser.id)
 
     // Calculate cycle information for active period
     let periodWithInfo = null
     if (activePeriod) {
       // Get the most recent previous period to calculate cycle info
-      const periods = await getPeriods(db, authUser.id)
+      const periods = await PeriodTrackerService.getPeriods(db, authUser.id)
       const previousPeriod = periods.find(p =>
         p.id !== activePeriod.id
         && new Date(p.startDate) < new Date(activePeriod.startDate),
