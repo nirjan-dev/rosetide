@@ -1,6 +1,16 @@
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/libsql'
-import type { Context } from 'hono'
-import { getEnv } from '../../env.js'
+import { getEnv } from '@/env.js'
+import { schema } from '@/lib/db/schema.js'
+const url = getEnv().DATABASE_URL
+if (!url) {
+  throw new Error('DATABASE_URL is not set')
+}
 
-export const getDB = (c: Context) => drizzle(getEnv(c).DB_FILE_NAME)
+export const db = drizzle({
+  connection: {
+    url,
+  },
+  schema,
+  logger: true,
+})
