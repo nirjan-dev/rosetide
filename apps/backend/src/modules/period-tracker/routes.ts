@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { getDB } from '@/lib/db/index.js'
+import { db } from '@/lib/db/index.js'
 import { calculateCycleInfo, calculateAverageCycleLength } from '@/lib/period-calculations.js'
 import { authGuard } from '@/middleware/auth-guard.js'
 import { PeriodTrackerService } from '@/modules/period-tracker/period-tracker.service.js'
@@ -8,8 +8,6 @@ import type { AuthGuardAppVariables } from '@/types/hono.types.js'
 const periodTrackerRoute = new Hono <{ Variables: AuthGuardAppVariables }>().use('*', authGuard).post('/', async (c) => {
   const authUser = c.get('user')
   try {
-    const db = getDB(c)
-
     // Check if user already has an active period
     const activePeriod = await PeriodTrackerService.getActivePeriod(db, authUser.id)
     if (activePeriod) {
@@ -35,8 +33,6 @@ const periodTrackerRoute = new Hono <{ Variables: AuthGuardAppVariables }>().use
   const authUser = c.get('user')
 
   try {
-    const db = getDB(c)
-
     // Get active period
     const activePeriod = await PeriodTrackerService.getActivePeriod(db, authUser.id)
     if (!activePeriod) {
@@ -61,7 +57,6 @@ const periodTrackerRoute = new Hono <{ Variables: AuthGuardAppVariables }>().use
   const authUser = c.get('user')
 
   try {
-    const db = getDB(c)
     const periods = await PeriodTrackerService.getPeriods(db, authUser.id)
 
     // Calculate cycle information for each period
@@ -91,7 +86,6 @@ const periodTrackerRoute = new Hono <{ Variables: AuthGuardAppVariables }>().use
   const authUser = c.get('user')
 
   try {
-    const db = getDB(c)
     const activePeriod = await PeriodTrackerService.getActivePeriod(db, authUser.id)
 
     // Calculate cycle information for active period

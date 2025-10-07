@@ -1,9 +1,15 @@
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/libsql'
 import { migrate } from 'drizzle-orm/libsql/migrator'
+import { getEnv } from '@/env.js'
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const db = drizzle(process.env.DATABASE_URL!)
+const url = getEnv().DATABASE_URL
+
+const db = drizzle({
+  connection: {
+    url,
+  },
+})
 
 export const runMigrations = () => migrate(db, {
   migrationsFolder: './migrations',

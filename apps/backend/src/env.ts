@@ -2,7 +2,7 @@ import { createEnv } from '@t3-oss/env-core'
 import type { Context } from 'hono'
 import { env } from 'hono/adapter'
 import { z } from 'zod'
-export const getEnv = (c: Context) => createEnv({
+export const getEnv = (c?: Context) => createEnv({
   server: {
     FRONTEND_URL: z.string().url(),
     DATABASE_URL: z.string(),
@@ -19,7 +19,7 @@ export const getEnv = (c: Context) => createEnv({
    * `process.env` or `import.meta.env`.
    */
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  runtimeEnv: env(c),
+  runtimeEnv: c ? env(c) : process.env,
 
   /**
    * By default, this library will feed the environment variables directly to

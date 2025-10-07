@@ -198,7 +198,7 @@ const CycleOverview = ({ averageCycleLength, activePeriod }: CycleOverviewProps)
   return (
     <div className="bg-base-100 rounded-box p-6 mb-8 shadow-lg">
       <h2 className="text-xl font-semibold mb-4 text-center">Cycle Information</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
         <div className="stat">
           <div className="stat-title">Average Cycle Length</div>
           <div className="stat-value text-primary">
