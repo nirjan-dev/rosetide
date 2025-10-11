@@ -21,17 +21,19 @@ Create a fast, private, and intuitive period tracking Progressive Web App (PWA) 
 ## 2. Technical Architecture
 
 ### Tech Stack
-- **Frontend:** Vite + React SPA + TypeScript
+- **Frontend:** Vite + React SPA + TypeScript + Tanstack router
 - **Local Database:** Dexie.js (a wrapper for IndexedDB)
-- **State Management:** React Query (TanStack Query) for managing local data state
-- **Styling:** Tailwind CSS + DaisyUI (Valentine theme)
-- **Components:** Radix UI (headless components for complex logic)
+- **State Management:** React Query (TanStack Query) for managing local data state, TanStack Store for global state management
+- **Styling:** Tailwind CSS + DaisyUI (Valentine theme), lucide react for icons
+- **Components:** Radix UI (headless components for complex logic), tanstack form for forms, tanstack table for tables
 - **Project Structure:** Modular, Domain-Driven Design
 - **Validation:** Zod schemas for data validation before storage
 - **Linting:** ESLint + ESLint Stylistic
-- **CI/CD:** GitHub Actions
-- **Deployment:** Vercel/Cloudflare Pages (static hosting)
+- **CI/CD:** GitHub Actions, T3Env for typesafe env variables
+- **Deployment:** Cloudflare Pages (static hosting)
 - **PWA:** Service Worker + Web App Manifest
+- **Testing** Storybook (with vitest browser mode)
+- **Package Management** PNPM with corepack and node 24
 
 ### Data Strategy
 - **Approach:** Local-first and local-only. All data is stored and managed in the browser's IndexedDB.
