@@ -1,0 +1,19 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - run: pnpm lint:fix {staged_files}
+      glob:
+        - "*.ts"
+        - "*.js"
+        - "*.tsx"
+        - "*.jsx"
+        - "*.json"
+        - "*.css"
+        - "*.html"
+      stage_fixed: true
+    - run: pnpm typecheck
+      glob:
+        - "*.ts"
+        - "*.js"
+        - "*.tsx"
+        - "*.jsx"
