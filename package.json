@@ -46,6 +46,7 @@
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^5.0.4",
+    "daisyui": "^5.1.30",
     "eslint": "^9.37.0",
     "jsdom": "^27.0.0",
     "lefthook": "^1.13.6",
