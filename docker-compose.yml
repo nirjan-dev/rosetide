@@ -1,9 +1,0 @@
-# use to test prod container image locally
-services:
-  periodos-app:
-    build: .
-    ports:
-      - "3000:3000"
-    env_file: "./apps/backend/.env"
-    volumes:
-      - ./apps/backend/data:/app/data
