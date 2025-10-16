@@ -246,6 +246,13 @@ periodos/
 - Other parts of the application (e.g., a page component or another feature) should only import from a module's `index.ts` file (`import { CalendarView } from '@/features/cycles';`).
 - This prevents tight coupling and makes dependencies explicit.
 
+### Code Style
+To maintain a clean and readable codebase, the following styles are enforced:
+
+-   **Import Aliases:** Always use non-relative import aliases for modules within the `src` directory. Use `@/` as the prefix for all imports referencing the `src` root.
+    -   **Correct:** `import { MyComponent } from '@/components/MyComponent';`
+    -   **Incorrect:** `import { MyComponent } from '../../components/MyComponent';`
+
 ### Security & Privacy
 - **Primary Feature:** All user data is stored exclusively on the user's device in IndexedDB. It is never transmitted to any server.
 - **Data Control:** The user has full control over their data, with clear options for export and deletion.
