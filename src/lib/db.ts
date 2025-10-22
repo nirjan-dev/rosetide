@@ -1,17 +1,18 @@
 import Dexie from 'dexie';
-import type {Table} from 'dexie';
-import type { CycleLog } from '@/modules/cycles/types';
+import type { Table } from 'dexie';
+import type { Cycle, PeriodDay } from '@/modules/cycles/types';
 
 export class Database extends Dexie {
-  cycles!: Table<CycleLog>;
+  cycles!: Table<Cycle>;
+  periodDays!: Table<PeriodDay>;
 
   constructor() {
-    super('Database');
-    // Version 1: Initial schema
-    this.version(1).stores({
-      cycles: '++id, date, isEnded', // Primary key: id (auto-incrementing), index on date
-    });
+    super('periodos_db');
 
+    this.version(1).stores({
+      cycles: '++id, startDate, endDate', // Stores one record per period cycle
+      periodDays: '++id, cycleId, date',   // Stores daily logs associated with a cycle
+    });
   }
 }
 

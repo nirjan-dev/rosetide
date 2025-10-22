@@ -43,7 +43,17 @@ Create a fast, private, and intuitive period tracking Progressive Web App (PWA) 
 - **Performance Target:** < 1 second load times.
 
 ### Data Model (Dexie Schema + Zod Validation)
-- Use Dexie.js to define IndexedDB schemas for tables like `cycles` and `symptoms`.
+The data is structured to clearly separate a period cycle from its daily logs. This allows for efficient querying and a clear representation of user data.
+
+- **`cycles` Table:** Stores one record for each complete period.
+  - `id` (auto-incrementing primary key)
+  - `startDate` (Date) - The first day of the period.
+  - `endDate` (Date, optional) - The last day of the period. An ongoing period has a `null` or `undefined` `endDate`.
+- **`periodDays` Table:** Stores daily logs that belong to a specific cycle.
+  - `id` (auto-incrementing primary key)
+  - `cycleId` (number) - A foreign key referencing the `id` in the `cycles` table.
+  - `date` (Date) - The specific date of the log.
+  - `flowIntensity` (number) - The recorded flow intensity for that day (scale 1-5).
 - Use Zod for runtime validation of all data before it's written to the local database.
 - Use TanStack Query hooks for fetching, creating, and updating data in the local database.
 
@@ -131,17 +141,17 @@ Create a fast, private, and intuitive period tracking Progressive Web App (PWA) 
 - [ ] Set up GitHub Actions workflow for CI.
 
 **Local Data Persistence**
-- [ ] Set up Dexie.js and define IndexedDB schemas for cycles and symptoms.
-- [ ] Create Zod schemas for all data models.
-- [ ] Set up React Query client to interact with Dexie.js.
-- [ ] Implement data access hooks (e.g., `useCycles`, `addCycleEntry`).
+- [x] Set up Dexie.js and define IndexedDB schemas for cycles and symptoms.
+- [x] Create Zod schemas for all data models.
+- [x] Set up React Query client to interact with Dexie.js.
+- [x] Implement data access hooks (e.g., `useCycles`, `addCycleEntry`).
 - [ ] Implement data import/export functionality.
 
 **Core Period Tracking**
-- [ ] Build the main UI for period start/stop functionality.
-- [ ] Build the calendar view component using Radix UI Calendar.
+- [x] Build the main UI for period start/stop functionality.
+- [x] Build the calendar view component using Radix UI Calendar.
 - [ ] Implement cycle calculation logic.
-- [ ] Connect UI to local data hooks with comprehensive error handling and loading states.
+- [x] Connect UI to local data hooks with comprehensive error handling and loading states.
 
 ### Priority 2: User Experience Essentials
 **Core features users need for basic functionality**
@@ -212,27 +222,18 @@ periodos/
 ├── src/
 │   ├── components/
 │   │   └── ui/               # Shared, simple UI components (Button, Card, Input)
-│   ├── features/             # Core application domains
+│   ├── modules/              # Core application domains (previously `features`)
 │   │   ├── cycles/           # Domain: Everything related to period cycles
 │   │   │   ├── components/   # React components specific to cycles (e.g., CalendarView)
-│   │   │   ├── hooks/        # React hooks for cycle logic (e.g., useCyclePredictions)
+│   │   │   ├── hooks/        # React hooks for cycle logic (e.g., useAllCycles)
 │   │   │   ├── types.ts      # TypeScript types and Zod schemas for cycles
 │   │   │   └── index.ts      # Public API for the 'cycles' module
 │   │   ├── symptoms/         # Domain: Everything related to symptom logging
-│   │   │   ├── components/   # (e.g., SymptomLogForm)
-│   │   │   ├── hooks/
-│   │   │   ├── types.ts
-│   │   │   └── index.ts      # Public API for the 'symptoms' module
 │   │   └── settings/         # Domain: Data import/export, themes, etc.
-│   │       ├── components/   # (e.g., DataExportButton)
-│   │       ├── hooks/
-│   │       └── index.ts
 │   ├── lib/
 │   │   └── db.ts             # Dexie.js database definition and initialization
-│   ├── pages/                # Top-level page components for routing
-│   │   ├── HomePage.tsx
-│   │   └── SettingsPage.tsx
-│   ├── providers/            # Global context providers (React Query, Theme, etc.)
+│   ├── integrations/         # Integrations with external services/libraries
+│   ├── routes/               # Route components for Tanstack Router
 │   ├── types/                # Truly global types shared across all domains
 │   └── main.tsx              # Application entry point
 ├── public/
@@ -242,9 +243,8 @@ periodos/
 └── tsconfig.json
 ```
 **Module Communication:**
-- A feature module (e.g., `cycles`) should only expose what is necessary through its `index.ts` file.
-- Other parts of the application (e.g., a page component or another feature) should only import from a module's `index.ts` file (`import { CalendarView } from '@/features/cycles';`).
-- This prevents tight coupling and makes dependencies explicit.
+- A module (e.g., `cycles`) should only expose what is necessary through its `index.ts` file.
+- Other parts of the application should only import from a module's public API.
 
 ### Code Style
 To maintain a clean and readable codebase, the following styles are enforced:
@@ -256,6 +256,7 @@ To maintain a clean and readable codebase, the following styles are enforced:
 ### Security & Privacy
 - **Primary Feature:** All user data is stored exclusively on the user's device in IndexedDB. It is never transmitted to any server.
 - **Data Control:** The user has full control over their data, with clear options for export and deletion.
+- **Browser Storage Policies:** Be aware that some browsers (e.g., Firefox with strict tracking protection) or private/incognito modes may block IndexedDB from being created, leading to a `QuotaExceededError`. Using a specific, non-generic database name (e.g., `periodos_db` instead of `Database`) is a critical mitigation for this.
 - **Dependencies:** Use well-maintained libraries and scan for vulnerabilities.
 - **HTTPS:** The app will be served over HTTPS to protect it in transit from the host to the user.
 

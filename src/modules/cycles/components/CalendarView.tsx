@@ -1,13 +1,12 @@
-import type { CycleLog } from '@/modules/cycles/types';
+import type { Cycle } from '@/modules/cycles/types';
 import { isSameDay } from '@/utils/datetime';
-
 
 // Props for the CalendarView component
 interface CalendarViewProps {
   /** The date that determines which month and year to display. */
   displayDate: Date;
-  /** An array of cycle logs to be marked on the calendar. */
-  cycleLogs: Array<CycleLog>;
+  /** An array of cycles to be marked on the calendar. */
+  cycles: Array<Cycle>;
   /** Callback to handle changing the displayed month. */
   onMonthChange: (newDate: Date) => void;
   /** Optional class name to apply to the container. */
@@ -19,12 +18,12 @@ const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /**
  * A UI component that displays a monthly calendar view. It highlights the
- * current day and any days that are marked as part of a menstrual cycle.
+ * current day and any days that are part of a menstrual cycle.
  * Includes controls for navigating between months.
  */
 export function CalendarView({
   displayDate,
-  cycleLogs = [],
+  cycles = [],
   onMonthChange,
   className,
 }: CalendarViewProps) {
@@ -32,12 +31,27 @@ export function CalendarView({
   const month = displayDate.getMonth(); // 0-indexed (January is 0)
 
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   // Create a set of date strings for efficient lookup of period days.
-  // Using toDateString() normalizes the date to the day, ignoring time.
-  const periodDays = new Set(
-    cycleLogs.map((log) => new Date(log.date).toDateString()),
-  );
+  // This logic now iterates through date ranges for each cycle.
+  const periodDays = new Set<string>();
+  cycles.forEach((cycle) => {
+    const startDate = new Date(cycle.startDate);
+    // If the cycle is ongoing (no end date), highlight up to today.
+    // Otherwise, use the specified end date.
+    const endDate = cycle.endDate ? new Date(cycle.endDate) : today;
+
+    // Use a for loop to iterate through the date range. This is a cleaner
+    // pattern for this task and avoids potential linter issues with `while` loops.
+    for (
+      let d = new Date(startDate);
+      d <= endDate;
+      d.setDate(d.getDate() + 1)
+    ) {
+      periodDays.add(d.toDateString());
+    }
+  });
 
   // --- Calendar Grid Logic ---
   const firstDayOfMonth = new Date(year, month, 1);
@@ -117,14 +131,15 @@ export function CalendarView({
             if (isPeriodDayFlag && !isTodayFlag) {
               dayClasses += ' bg-red-200 text-red-800';
             }
+            // Add a distinct style if the day is both today and a period day
+            if (isPeriodDayFlag && isTodayFlag) {
+              dayClasses +=
+                ' bg-primary ring-2 ring-red-300 ring-offset-1 ring-offset-base-100';
+            }
 
             return (
               <div key={day} className={dayClasses}>
                 {day}
-                {/* Add a small dot indicator if the day is both today and a period day */}
-                {isPeriodDayFlag && isTodayFlag && (
-                  <span className="absolute bottom-1 h-1 w-1 rounded-full bg-primary-content"></span>
-                )}
               </div>
             );
           })}

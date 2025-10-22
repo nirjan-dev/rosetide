@@ -11,18 +11,20 @@ interface PeriodLoggingCardProps {
   onStartPeriod: () => void;
   /** Callback fired when the "End Period" button is clicked, marking the cycle as complete. */
   onEndPeriod: () => void;
-  /** Callback fired when the "Cancel Log" button is clicked, deleting today's entry. */
+  /** Callback fired when the "Cancel Period" button is clicked, deleting the cycle. */
   onCancelPeriod: () => void;
   /** Callback fired when the flow intensity value changes. */
   onFlowChange: (newIntensity: number) => void;
   /** If true, all interactive elements will be disabled. */
   isLoading?: boolean;
+  /** If true, the user is allowed to cancel the period (e.g., only on the same day it started). */
+  canCancel?: boolean;
 }
 
 /**
  * A UI card component that serves as the primary control for logging
  * the start and end of a menstrual period and tracking daily flow intensity.
- * It provides explicit actions for starting, ending, and canceling a period log.
+ * It provides explicit actions for starting, ending, and canceling a period.
  */
 export function PeriodLoggingCard({
   currentDate,
@@ -33,6 +35,7 @@ export function PeriodLoggingCard({
   onCancelPeriod,
   onFlowChange,
   isLoading = false,
+  canCancel = false,
 }: PeriodLoggingCardProps) {
   const formattedDate = currentDate.toLocaleDateString(undefined, {
     weekday: 'long',
@@ -50,7 +53,7 @@ export function PeriodLoggingCard({
         <div className="card-actions justify-center w-full">
           {isPeriodActive ? (
             // --- Active Period State ---
-            // When a period is logged for today, show options to end or cancel it.
+            // When a period is active, show options to end or cancel it.
             <div className="flex flex-col sm:flex-row gap-2 w-full">
               <button
                 className="btn btn-primary flex-grow"
@@ -63,17 +66,19 @@ export function PeriodLoggingCard({
                   'End Period'
                 )}
               </button>
-              <button
-                className="btn btn-ghost flex-grow"
-                onClick={onCancelPeriod}
-                disabled={isLoading}
-              >
-                Cancel Log
-              </button>
+              {canCancel && (
+                <button
+                  className="btn btn-ghost flex-grow"
+                  onClick={onCancelPeriod}
+                  disabled={isLoading}
+                >
+                  Cancel Period
+                </button>
+              )}
             </div>
           ) : (
             // --- Default State ---
-            // If no period is logged for today, show the start button.
+            // If no period is active, show the start button.
             <button
               className="btn btn-primary btn-wide"
               onClick={onStartPeriod}
@@ -88,7 +93,7 @@ export function PeriodLoggingCard({
           )}
         </div>
 
-        {/* The Flow Intensity Slider is only shown if there's a period log for today */}
+        {/* The Flow Intensity Slider is only shown if a period is active */}
         {isPeriodActive && (
           <FlowIntensitySlider
             value={flowIntensity}

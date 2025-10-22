@@ -1,82 +1,134 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useMutation } from '@tanstack/react-query';
-import type {CycleLog} from '@/modules/cycles/types';
+import type { Cycle, PeriodDay } from '@/modules/cycles/types';
 import { db } from '@/lib/db';
-import {  cycleLogSchema } from '@/modules/cycles/types';
+import { cycleSchema, periodDaySchema } from '@/modules/cycles/types';
+
+// --- Query Hooks ---
 
 /**
- * A factory for creating consistent query keys for cycle logs.
- * Although useLiveQuery removes the need for manual invalidation,
- * these keys can still be useful for direct cache manipulation if needed.
+ * Provides a reactive, real-time list of all period cycles, sorted by start date descending.
+ * @returns An array of all cycle objects, or `undefined` during initial load.
  */
-export const cycleLogKeys = {
-  all: ['cycleLogs'] as const,
-  byDate: (date: string) => [...cycleLogKeys.all, 'date', date] as const,
-};
-
-/**
- * A Dexie React hook that provides a reactive, real-time list of all cycle logs.
- *
- * This hook uses `useLiveQuery` to subscribe directly to the Dexie database.
- * The component using this hook will automatically re-render whenever the
- * data in the 'cycles' table changes.
- *
- * @returns An array of all cycle logs, which is `undefined` during the initial loading state.
- */
-export function useCycleLogs() {
-  return useLiveQuery(() => db.cycles.toArray(), []);
+export function useAllCycles() {
+  return useLiveQuery(
+    () => db.cycles.orderBy('startDate').reverse().toArray(),
+    [],
+  );
 }
 
 /**
- * A TanStack Query mutation hook for adding a new cycle log entry.
- *
- * It validates the input against the Zod schema before insertion.
- * Data changes will be automatically reflected in components using `useCycleLogs`.
- *
- * @returns A mutation object for adding a cycle log.
+ * Provides the currently active period cycle (i.e., the one with no endDate).
+ * @returns The active cycle object, or `undefined` if none is active or during load.
  */
-export function useAddCycleLog() {
+export function useActiveCycle() {
+  return useLiveQuery(
+    () => db.cycles.filter((cycle) => !cycle.endDate).first(),
+    [],
+  );
+}
+
+/**
+ * Provides a reactive list of all daily logs for a specific cycle.
+ * @param cycleId The ID of the cycle to fetch logs for. Can be undefined.
+ * @returns An array of PeriodDay objects, or `undefined` during load.
+ */
+export function usePeriodDays(cycleId: number | undefined) {
+  return useLiveQuery((): Promise<Array<PeriodDay>> => {
+    if (typeof cycleId !== 'number') {
+      return Promise.resolve([]);
+    }
+    return db.periodDays.where('cycleId').equals(cycleId).sortBy('date');
+  }, [cycleId]);
+}
+
+// --- Mutation Hooks ---
+
+/**
+ * A mutation to start a new period cycle.
+ * It creates a new cycle record and the first daily log in a single transaction.
+ */
+export function useStartPeriod() {
   return useMutation({
-    mutationFn: async (newLog: Omit<CycleLog, 'id'>) => {
-      // Validate the data before writing to the database
-      const validatedLog = cycleLogSchema.omit({ id: true }).parse(newLog);
-      return await db.cycles.add(validatedLog as CycleLog);
+    mutationFn: async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Normalize to the start of the day
+
+      const validatedCycle = cycleSchema
+        .omit({ id: true })
+        .parse({ startDate: today });
+
+      return await db.transaction('rw', db.cycles, db.periodDays, async () => {
+        // 1. Create the new cycle
+        const newCycleId = await db.cycles.add(validatedCycle as Cycle);
+
+        // 2. Create the first period day log for today
+        const validatedDay = periodDaySchema.omit({ id: true }).parse({
+          cycleId: newCycleId,
+          date: today,
+          flowIntensity: 1, // Default flow
+        });
+        await db.periodDays.add(validatedDay as PeriodDay);
+
+        return newCycleId;
+      });
     },
-    // No onSuccess invalidation needed, useLiveQuery handles it automatically.
   });
 }
 
 /**
- * A TanStack Query mutation hook for updating an existing cycle log entry.
- *
- * Data changes will be automatically reflected in components using `useCycleLogs`.
- *
- * @returns A mutation object for updating a cycle log.
+ * A mutation to end the currently active period cycle.
+ * It sets the `endDate` of the specified cycle to the current date.
  */
-export function useUpdateCycleLog() {
+export function useEndPeriod() {
   return useMutation({
-    mutationFn: async (logToUpdate: Partial<CycleLog> & { id: number }) => {
-      const { id, ...data } = logToUpdate;
-      // Validate the partial data before updating
-      const validatedData = cycleLogSchema.partial().parse(data);
-      return await db.cycles.update(id, validatedData);
+    mutationFn: async (activeCycleId: number) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Normalize to the start of the day
+
+      return await db.cycles.update(activeCycleId, { endDate: today });
     },
-    // No onSuccess invalidation needed, useLiveQuery handles it automatically.
   });
 }
 
 /**
- * A TanStack Query mutation hook for deleting a cycle log entry.
- *
- * Data changes will be automatically reflected in components using `useCycleLogs`.
- *
- * @returns A mutation object for deleting a cycle log.
+ * A mutation to update a daily period log.
+ * Typically used to change the flow intensity for a given day.
  */
-export function useDeleteCycleLog() {
+export function useUpdatePeriodDay() {
   return useMutation({
-    mutationFn: (id: number) => {
-      return db.cycles.delete(id);
+    mutationFn: async (dayLog: Partial<PeriodDay> & { id: number }) => {
+      const { id, ...data } = dayLog;
+      const validatedData = periodDaySchema.partial().parse(data);
+      return await db.periodDays.update(id, validatedData);
     },
-    // No onSuccess invalidation needed, useLiveQuery handles it automatically.
+  });
+}
+
+/**
+ * A mutation to add a new daily log to an active cycle.
+ * This is used to automatically log a new day when the app is opened during an active period.
+ */
+export function useAddPeriodDay() {
+  return useMutation({
+    mutationFn: async (newDay: Omit<PeriodDay, 'id'>) => {
+      const validatedDay = periodDaySchema.omit({ id: true }).parse(newDay);
+      return await db.periodDays.add(validatedDay as PeriodDay);
+    },
+  });
+}
+
+/**
+ * A mutation to cancel/delete a period cycle.
+ * It removes the cycle and all its associated daily logs in a transaction.
+ */
+export function useCancelPeriod() {
+  return useMutation({
+    mutationFn: async (cycleId: number) => {
+      return await db.transaction('rw', db.cycles, db.periodDays, async () => {
+        await db.periodDays.where('cycleId').equals(cycleId).delete();
+        await db.cycles.delete(cycleId);
+      });
+    },
   });
 }

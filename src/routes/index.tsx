@@ -3,12 +3,17 @@ import { useState } from 'react';
 import { PeriodLoggingCard } from '@/modules/cycles/components/PeriodLoggingCard';
 import { CalendarView } from '@/modules/cycles/components/CalendarView';
 import {
-  useAddCycleLog,
-  useCycleLogs,
-  useDeleteCycleLog,
-  useUpdateCycleLog,
+  useAllCycles,
+  useCancelPeriod,
+  useEndPeriod,
+  useStartPeriod,
+  useUpdatePeriodDay,
 } from '@/modules/cycles/hooks/useCycleLogs';
-import { useCycleState } from '@/modules/cycles/hooks/useCycleState';
+import {
+  useAutomaticDailyLogging,
+  useCycleState,
+} from '@/modules/cycles/hooks/useCycleState';
+import { isSameDay } from '@/utils/datetime';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -18,55 +23,58 @@ export const Route = createFileRoute('/')({
  * The main home page for the application.
  *
  * This component orchestrates the data flow and state management for the
- * primary user-facing features: logging period days and viewing the cycle
- * history on a calendar. It uses `useLiveQuery` for reactive data fetching.
+ * primary user-facing features: logging period cycles and viewing the
+ * history on a calendar.
  */
 function HomePage() {
   const [calendarDate, setCalendarDate] = useState(new Date());
   const today = new Date();
 
   // --- Data Fetching & State ---
-  const cycleLogs = useCycleLogs();
-  const { isPeriodActive, todayLog } = useCycleState(cycleLogs);
+  const allCycles = useAllCycles();
+  const { activeCycle, isPeriodActive, todayLog } = useCycleState();
+
+  // This hook handles creating a new log for today if a period is active
+  useAutomaticDailyLogging();
 
   // --- Mutations ---
-  const addCycleLog = useAddCycleLog();
-  const updateCycleLog = useUpdateCycleLog();
-  const deleteCycleLog = useDeleteCycleLog();
+  const startPeriod = useStartPeriod();
+  const endPeriod = useEndPeriod();
+  const cancelPeriod = useCancelPeriod();
+  const updatePeriodDay = useUpdatePeriodDay();
+
   const isMutating =
-    addCycleLog.isPending ||
-    updateCycleLog.isPending ||
-    deleteCycleLog.isPending;
+    startPeriod.isPending ||
+    endPeriod.isPending ||
+    cancelPeriod.isPending ||
+    updatePeriodDay.isPending;
 
   // --- Event Handlers ---
 
   /**
-   * Creates a new period log for the current day.
+   * Starts a new period cycle.
    */
   const handleStartPeriod = () => {
-    addCycleLog.mutate({
-      date: today,
-      type: 'periodDay',
-      flowIntensity: 1, // Default flow
-      isEnded: false, // Explicitly mark as ongoing
-    });
+    startPeriod.mutate();
   };
 
   /**
-   * Marks today's period log as the end of the cycle.
+   * Ends the current active period cycle.
    */
   const handleEndPeriod = () => {
-    if (todayLog?.id) {
-      updateCycleLog.mutate({ id: todayLog.id, isEnded: true });
+    // Check for existence of activeCycle and its id before mutating.
+    if (activeCycle?.id) {
+      endPeriod.mutate(activeCycle.id);
     }
   };
 
   /**
-   * Deletes today's period log, effectively canceling it.
+   * Cancels the active period, but only if it was started today.
    */
   const handleCancelPeriod = () => {
-    if (todayLog?.id) {
-      deleteCycleLog.mutate(todayLog.id);
+    // Check for existence of activeCycle and its id before mutating.
+    if (activeCycle?.id) {
+      cancelPeriod.mutate(activeCycle.id);
     }
   };
 
@@ -74,20 +82,25 @@ function HomePage() {
    * Updates the flow intensity for today's log entry.
    */
   const handleFlowChange = (newIntensity: number) => {
+    // Check for existence of todayLog and its id before mutating.
     if (todayLog?.id) {
-      updateCycleLog.mutate({ id: todayLog.id, flowIntensity: newIntensity });
+      updatePeriodDay.mutate({ id: todayLog.id, flowIntensity: newIntensity });
     }
   };
 
   // --- Render Logic ---
 
-  if (cycleLogs === undefined) {
+  if (allCycles === undefined) {
     return (
       <div className="flex justify-center items-center h-screen">
         <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
+
+  // A period can only be cancelled on the same day it was started.
+  const canCancelPeriod =
+    activeCycle ? isSameDay(activeCycle.startDate, today) : false;
 
   return (
     <main className="container mx-auto p-4 flex flex-col items-center gap-8">
@@ -100,10 +113,11 @@ function HomePage() {
         onCancelPeriod={handleCancelPeriod}
         onFlowChange={handleFlowChange}
         isLoading={isMutating}
+        canCancel={canCancelPeriod}
       />
       <CalendarView
         displayDate={calendarDate}
-        cycleLogs={cycleLogs}
+        cycles={allCycles}
         onMonthChange={setCalendarDate}
       />
     </main>

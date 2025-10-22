@@ -1,16 +1,20 @@
 import { z } from 'zod';
 
-export const cycleLogSchema = z.object({
+// Schema for a period cycle, representing the start and end of a period.
+export const cycleSchema = z.object({
   id: z.number().optional(), // Dexie handles auto-incrementing
-  date: z.date(),
-  type: z.literal('periodDay'),
-  flowIntensity: z.number().min(1).max(5),
-  /**
-   * If true, this log entry marks the last day of a period cycle.
-   * This helps differentiate between an ongoing period and a finished one.
-   * Defaults to false.
-   */
-  isEnded: z.boolean().optional().default(false),
+  startDate: z.date(),
+  endDate: z.date().optional(), // An ongoing period will not have an end date.
 });
 
-export type CycleLog = z.infer<typeof cycleLogSchema>;
+export type Cycle = z.infer<typeof cycleSchema>;
+
+// Schema for a single day's log within a period cycle.
+export const periodDaySchema = z.object({
+  id: z.number().optional(), // Dexie handles auto-incrementing
+  cycleId: z.number(), // Foreign key to the Cycle table
+  date: z.date(),
+  flowIntensity: z.number().min(1).max(5),
+});
+
+export type PeriodDay = z.infer<typeof periodDaySchema>;
