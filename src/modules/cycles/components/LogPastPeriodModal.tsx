@@ -18,7 +18,7 @@ export const LogPastPeriodModal = () => {
 
   return (
     <>
-      <button className="btn btn-primary" onClick={openModal}>
+      <button className="btn" onClick={openModal}>
         Log a Past Period
       </button>
 

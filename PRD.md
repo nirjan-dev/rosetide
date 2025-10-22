@@ -62,7 +62,8 @@ The data is structured to clearly separate a period cycle from its daily logs. T
 1. **Period Tracking**
    - Start/stop period logging.
    - Flow intensity tracking (1-5 scale).
-   - Calendar view of past and current cycles.
+   - Log past periods with start and end dates.
+   - Calendar and list views of past and current cycles.
 
 2. **Symptom Logging**
    - Quick 1-5 scale for: Flow, Mood, Pain, Energy, Bloating, Cravings.
@@ -78,6 +79,7 @@ The data is structured to clearly separate a period cycle from its daily logs. T
    - Ability to export all data to a JSON file.
    - Ability to import data from a previously exported file.
    - A clear "Delete All My Data" button.
+   - Ability to delete individual cycles from the history view.
 
 5. **PWA Functionality**
    - Service worker for instant loading.
@@ -118,10 +120,11 @@ The data is structured to clearly separate a period cycle from its daily logs. T
 4. Data saves automatically to the local database with visual confirmation.
 
 #### Analysis Flow
-1. Navigate to calendar view.
-2. See cycle history and patterns.
-3. View predictions for the next period.
-4. Access detailed cycle insights.
+1. Navigate to the "History" or "Calendar" tab.
+2. See cycle history and patterns in the preferred view.
+3. Log a past period via the dedicated button.
+4. Delete a specific cycle from the history list.
+5. View predictions for the next period.
 
 ### Performance Requirements
 - **Initial Load:** < 1 second.
@@ -150,7 +153,9 @@ The data is structured to clearly separate a period cycle from its daily logs. T
 **Core Period Tracking**
 - [x] Build the main UI for period start/stop functionality.
 - [x] Build the calendar view component using Radix UI Calendar.
-- [ ] Implement cycle calculation logic.
+- [x] Implement UI for logging past periods.
+- [x] Add a list view for cycle history with delete functionality.
+- [x] Implement cycle calculation logic.
 - [x] Connect UI to local data hooks with comprehensive error handling and loading states.
 
 ### Priority 2: User Experience Essentials

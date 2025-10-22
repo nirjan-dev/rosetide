@@ -106,8 +106,8 @@ function HomePage() {
     activeCycle ? isSameDay(activeCycle.startDate, today) : false;
 
   return (
-    <main className="container mx-auto p-4 flex flex-col items-center gap-8">
-      <div className="w-full max-w-md flex flex-col gap-4 items-center">
+    <main className="container max-w-lg mx-auto py-4 px-6 flex flex-col items-center gap-8">
+      <div className="w-full max-w-md flex flex-col gap-8 center">
         <PeriodLoggingCard
           currentDate={today}
           isPeriodActive={isPeriodActive}
@@ -123,7 +123,7 @@ function HomePage() {
       </div>
 
       <div className="w-full max-w-2xl">
-        <div role="tablist" className="tabs tabs-boxed mb-4">
+        <div role="tablist" className="tabs tabs-border mb-4">
           {/* biome-ignore lint/a11y/useAnchorContent: <explanation> */}
           <a
             role="tab"

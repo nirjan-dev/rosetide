@@ -80,7 +80,7 @@ export const PeriodHistoryList = () => {
       <div className="text-center p-8 bg-base-200 rounded-lg">
         <p className="opacity-70">You haven't logged any periods yet.</p>
         <p className="text-sm opacity-50 mt-2">
-          Use the main button to log your current period or add a past one.
+          Please start a new period or add a past one.
         </p>
       </div>
     );
@@ -152,7 +152,7 @@ export const PeriodHistoryList = () => {
                   </td>
                   <td>
                     <span className="badge badge-ghost">
-                      {duration} day{duration === 1 ? "" : "s"}
+                      {duration}&nbsp;day{duration === 1 ? "" : "s"}
                     </span>
                   </td>
                   <td>
