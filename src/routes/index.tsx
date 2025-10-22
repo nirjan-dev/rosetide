@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { PeriodLoggingCard } from '@/modules/cycles/components/PeriodLoggingCard';
 import { CalendarView } from '@/modules/cycles/components/CalendarView';
+import { LogPastPeriodModal } from '@/modules/cycles/components/LogPastPeriodModal';
+import { PeriodHistoryList } from '@/modules/cycles/components/PeriodHistoryList';
 import {
   useAllCycles,
   useCancelPeriod,
@@ -27,6 +29,7 @@ export const Route = createFileRoute('/')({
  * history on a calendar.
  */
 function HomePage() {
+  const [activeView, setActiveView] = useState<'calendar' | 'list'>('calendar');
   const [calendarDate, setCalendarDate] = useState(new Date());
   const today = new Date();
 
@@ -104,22 +107,53 @@ function HomePage() {
 
   return (
     <main className="container mx-auto p-4 flex flex-col items-center gap-8">
-      <PeriodLoggingCard
-        currentDate={today}
-        isPeriodActive={isPeriodActive}
-        flowIntensity={todayLog?.flowIntensity ?? 1}
-        onStartPeriod={handleStartPeriod}
-        onEndPeriod={handleEndPeriod}
-        onCancelPeriod={handleCancelPeriod}
-        onFlowChange={handleFlowChange}
-        isLoading={isMutating}
-        canCancel={canCancelPeriod}
-      />
-      <CalendarView
-        displayDate={calendarDate}
-        cycles={allCycles}
-        onMonthChange={setCalendarDate}
-      />
+      <div className="w-full max-w-md flex flex-col gap-4 items-center">
+        <PeriodLoggingCard
+          currentDate={today}
+          isPeriodActive={isPeriodActive}
+          flowIntensity={todayLog?.flowIntensity ?? 1}
+          onStartPeriod={handleStartPeriod}
+          onEndPeriod={handleEndPeriod}
+          onCancelPeriod={handleCancelPeriod}
+          onFlowChange={handleFlowChange}
+          isLoading={isMutating}
+          canCancel={canCancelPeriod}
+        />
+        <LogPastPeriodModal />
+      </div>
+
+      <div className="w-full max-w-2xl">
+        <div role="tablist" className="tabs tabs-boxed mb-4">
+          {/* biome-ignore lint/a11y/useAnchorContent: <explanation> */}
+          <a
+            role="tab"
+            className={`tab ${activeView === 'calendar' ? 'tab-active' : ''}`}
+            onClick={() => setActiveView('calendar')}
+            onKeyDown={e => e.key === 'Enter' && setActiveView('calendar')}
+          >
+            Calendar
+          </a>
+          {/* biome-ignore lint/a11y/useAnchorContent: <explanation> */}
+          <a
+            role="tab"
+            className={`tab ${activeView === 'list' ? 'tab-active' : ''}`}
+            onClick={() => setActiveView('list')}
+            onKeyDown={e => e.key === 'Enter' && setActiveView('list')}
+          >
+            History
+          </a>
+        </div>
+
+        {activeView === 'calendar' ? (
+          <CalendarView
+            displayDate={calendarDate}
+            cycles={allCycles}
+            onMonthChange={setCalendarDate}
+          />
+        ) : (
+          <PeriodHistoryList />
+        )}
+      </div>
     </main>
   );
 }
