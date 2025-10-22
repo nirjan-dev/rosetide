@@ -27,7 +27,7 @@ function HomePage() {
 
   // --- Data Fetching & State ---
   const cycleLogs = useCycleLogs();
-  const { isPeriodToday, todayLog } = useCycleState(cycleLogs);
+  const { isPeriodActive, todayLog } = useCycleState(cycleLogs);
 
   // --- Mutations ---
   const addCycleLog = useAddCycleLog();
@@ -93,7 +93,7 @@ function HomePage() {
     <main className="container mx-auto p-4 flex flex-col items-center gap-8">
       <PeriodLoggingCard
         currentDate={today}
-        isPeriodToday={isPeriodToday}
+        isPeriodActive={isPeriodActive}
         flowIntensity={todayLog?.flowIntensity ?? 1}
         onStartPeriod={handleStartPeriod}
         onEndPeriod={handleEndPeriod}

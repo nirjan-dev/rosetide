@@ -3,8 +3,8 @@ import { FlowIntensitySlider } from '@/modules/cycles/components/FlowIntensitySl
 interface PeriodLoggingCardProps {
   /** The current date to be displayed on the card. */
   currentDate: Date;
-  /** True if there is a period log specifically for today. */
-  isPeriodToday: boolean;
+  /** True if there is an ongoing period cycle. */
+  isPeriodActive: boolean;
   /** The current flow intensity for today (1-5). Defaults to 1. */
   flowIntensity: number;
   /** Callback fired when the "Start Period" button is clicked. */
@@ -26,7 +26,7 @@ interface PeriodLoggingCardProps {
  */
 export function PeriodLoggingCard({
   currentDate,
-  isPeriodToday,
+  isPeriodActive,
   flowIntensity,
   onStartPeriod,
   onEndPeriod,
@@ -48,7 +48,7 @@ export function PeriodLoggingCard({
         <p className="mb-4 text-base-content/80">{formattedDate}</p>
 
         <div className="card-actions justify-center w-full">
-          {isPeriodToday ? (
+          {isPeriodActive ? (
             // --- Active Period State ---
             // When a period is logged for today, show options to end or cancel it.
             <div className="flex flex-col sm:flex-row gap-2 w-full">
@@ -89,7 +89,7 @@ export function PeriodLoggingCard({
         </div>
 
         {/* The Flow Intensity Slider is only shown if there's a period log for today */}
-        {isPeriodToday && (
+        {isPeriodActive && (
           <FlowIntensitySlider
             value={flowIntensity}
             onChange={onFlowChange}
