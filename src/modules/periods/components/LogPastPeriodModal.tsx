@@ -1,10 +1,7 @@
 import { useRef } from "react";
-import { LogPastPeriodForm } from "@/modules/cycles/components/LogPastPeriodForm";
+import { LogPastPeriodForm } from "@/modules/periods/components/LogPastPeriodForm";
 
-/**
- * A component that provides a button to open a modal for logging a past period.
- * It contains the trigger button and the modal dialog itself.
- */
+
 export const LogPastPeriodModal = () => {
   const modalRef = useRef<HTMLDialogElement>(null);
 
@@ -26,14 +23,13 @@ export const LogPastPeriodModal = () => {
         <div className="modal-box">
           <h3 className="font-bold text-lg">Log a Past Period</h3>
           <p className="py-4 text-sm opacity-80">
-            Select the start and end dates for a past period cycle. This will
+            Select the start and end dates for a past period. This will
             help improve the accuracy of your future predictions.
           </p>
 
           <LogPastPeriodForm onSuccess={closeModal} onCancel={closeModal} />
         </div>
         <form method="dialog" className="modal-backdrop">
-          {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
           <button>close</button>
         </form>
       </dialog>

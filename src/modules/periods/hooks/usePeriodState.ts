@@ -1,26 +1,23 @@
 import { useEffect, useMemo } from 'react';
 
 import {
-  useActiveCycle,
+  useActivePeriod,
   useAddPeriodDay,
   usePeriodDays,
-} from './useCycleLogs';
+} from '@/modules/periods/hooks/usePeriodLogs';
 import { isSameDay } from '@/utils/datetime';
 
-/**
- * A hook that derives the current state of the user's menstrual cycle
- */
-export function useCycleState() {
-  const activeCycle = useActiveCycle();
-  const periodDays = usePeriodDays(activeCycle?.id);
+export function usePeriodState() {
+  const activePeriod = useActivePeriod();
+  const periodDays = usePeriodDays(activePeriod?.id);
 
   const state = useMemo(() => {
-    const isPeriodActive = !!activeCycle;
+    const isPeriodActive = !!activePeriod;
 
     // Default state when no period is active or data is loading
     if (!isPeriodActive || !periodDays) {
       return {
-        activeCycle: undefined,
+        activePeriod: undefined,
         isPeriodActive: false,
         todayLog: undefined,
       };
@@ -34,24 +31,17 @@ export function useCycleState() {
     );
 
     return {
-      activeCycle,
+      activePeriod,
       isPeriodActive,
       todayLog,
     };
-  }, [activeCycle, periodDays]);
+  }, [activePeriod, periodDays]);
 
   return state;
 }
 
-/**
- * A side-effect hook to automatically create a new daily log if the app is opened
- * during an active period on a day that hasn't been logged yet.
- *
- * This keeps the state logic in `useCycleState` clean and separates the action
- * of logging from the derivation of state.
- */
 export function useAutomaticDailyLogging() {
-  const { activeCycle, todayLog } = useCycleState();
+  const { activePeriod, todayLog } = usePeriodState();
   const { mutate: addDay, isPending: isAddingDay } = useAddPeriodDay();
 
   useEffect(() => {
@@ -59,19 +49,17 @@ export function useAutomaticDailyLogging() {
     // 1. A period cycle is active and its data is loaded.
     // 2. There is no log for today yet.
     // 3. The mutation to add a day is not already in progress.
-    if (activeCycle && !todayLog && !isAddingDay) {
+    if (activePeriod && !todayLog && !isAddingDay) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Defensive check: ensure the cycle ID exists. The linter indicates the
-      // date check is redundant.
-      if (activeCycle.id) {
+      if (activePeriod.id) {
         addDay({
-          cycleId: activeCycle.id,
+          periodId: activePeriod.id,
           date: today,
           flowIntensity: 1, // Default flow
         });
       }
     }
-  }, [activeCycle, todayLog, addDay, isAddingDay]);
+  }, [activePeriod, todayLog, addDay, isAddingDay]);
 }

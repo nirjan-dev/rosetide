@@ -1,31 +1,17 @@
-import { FlowIntensitySlider } from '@/modules/cycles/components/FlowIntensitySlider';
+import { FlowIntensitySlider } from '@/modules/periods/components/FlowIntensitySlider';
 
 interface PeriodLoggingCardProps {
-  /** The current date to be displayed on the card. */
   currentDate: Date;
-  /** True if there is an ongoing period cycle. */
   isPeriodActive: boolean;
-  /** The current flow intensity for today (1-5). Defaults to 1. */
   flowIntensity: number;
-  /** Callback fired when the "Start Period" button is clicked. */
   onStartPeriod: () => void;
-  /** Callback fired when the "End Period" button is clicked, marking the cycle as complete. */
   onEndPeriod: () => void;
-  /** Callback fired when the "Cancel Period" button is clicked, deleting the cycle. */
   onCancelPeriod: () => void;
-  /** Callback fired when the flow intensity value changes. */
   onFlowChange: (newIntensity: number) => void;
-  /** If true, all interactive elements will be disabled. */
   isLoading?: boolean;
-  /** If true, the user is allowed to cancel the period (e.g., only on the same day it started). */
   canCancel?: boolean;
 }
 
-/**
- * A UI card component that serves as the primary control for logging
- * the start and end of a menstrual period and tracking daily flow intensity.
- * It provides explicit actions for starting, ending, and canceling a period.
- */
 export function PeriodLoggingCard({
   currentDate,
   isPeriodActive,
@@ -93,7 +79,7 @@ export function PeriodLoggingCard({
           )}
         </div>
 
-        {/* The Flow Intensity Slider is only shown if a period is active */}
+
         {isPeriodActive && (
           <FlowIntensitySlider
             value={flowIntensity}

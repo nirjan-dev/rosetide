@@ -1,29 +1,19 @@
-import type { Cycle } from '@/modules/cycles/types';
+import type { Period } from '@/modules/periods/types';
 import { isSameDay } from '@/utils/datetime';
 
-// Props for the CalendarView component
 interface CalendarViewProps {
-  /** The date that determines which month and year to display. */
   displayDate: Date;
-  /** An array of cycles to be marked on the calendar. */
-  cycles: Array<Cycle>;
-  /** Callback to handle changing the displayed month. */
+  periods: Array<Period>;
   onMonthChange: (newDate: Date) => void;
-  /** Optional class name to apply to the container. */
   className?: string;
 }
 
 // Static array for the days of the week header.
 const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/**
- * A UI component that displays a monthly calendar view. It highlights the
- * current day and any days that are part of a menstrual cycle.
- * Includes controls for navigating between months.
- */
 export function CalendarView({
   displayDate,
-  cycles = [],
+  periods = [],
   onMonthChange,
   className,
 }: CalendarViewProps) {
@@ -34,16 +24,14 @@ export function CalendarView({
   today.setHours(0, 0, 0, 0);
 
   // Create a set of date strings for efficient lookup of period days.
-  // This logic now iterates through date ranges for each cycle.
+  // This logic now iterates through date ranges for each period.
   const periodDays = new Set<string>();
-  cycles.forEach((cycle) => {
-    const startDate = new Date(cycle.startDate);
-    // If the cycle is ongoing (no end date), highlight up to today.
+  periods.forEach((period) => {
+    const startDate = new Date(period.startDate);
+    // If the period is ongoing (no end date), highlight up to today.
     // Otherwise, use the specified end date.
-    const endDate = cycle.endDate ? new Date(cycle.endDate) : today;
+    const endDate = period.endDate ? new Date(period.endDate) : today;
 
-    // Use a for loop to iterate through the date range. This is a cleaner
-    // pattern for this task and avoids potential linter issues with `while` loops.
     for (
       let d = new Date(startDate);
       d <= endDate;
@@ -53,7 +41,6 @@ export function CalendarView({
     }
   });
 
-  // --- Calendar Grid Logic ---
   const firstDayOfMonth = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 

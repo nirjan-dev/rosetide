@@ -1,46 +1,37 @@
 import { useQuery } from "@tanstack/react-query";
 import { differenceInDays, format, isValid } from "date-fns";
 import { useRef, useState } from "react";
-import { useDeleteCycle } from "../hooks/useDeleteCycle";
+import { useDeletePeriod } from "../hooks/useDeletePeriod";
 import { db } from "@/lib/db";
 
-/**
- * A custom hook to fetch all cycle records from the database,
- * sorted by start date in descending order.
- *
- * @returns A TanStack Query object containing the list of cycles.
- */
-export const useCycles = () => {
+export const usePeriods = () => {
   return useQuery({
-    queryKey: ["cycles"],
+    queryKey: ["periods"],
     queryFn: async () => {
-      const cycles = await db.cycles.orderBy("startDate").reverse().toArray();
-      return cycles;
+      const periods = await db.periods.orderBy("startDate").reverse().toArray();
+      return periods;
     },
   });
 };
 
-/**
- * A component that displays a list of all past and current period cycles
- * in a table format. It shows the start date, end date, and duration for each cycle.
- */
+
 export const PeriodHistoryList = () => {
-  const { data: cycles, isLoading, isError, error } = useCycles();
-  const deleteCycle = useDeleteCycle();
+  const { data: periods, isLoading, isError, error } = usePeriods();
+  const deletePeriod = useDeletePeriod();
   const modalRef = useRef<HTMLDialogElement>(null);
-  const [selectedCycleId, setSelectedCycleId] = useState<number | null>(null);
+  const [selectedPeriodId, setSelectedPeriodId] = useState<number | null>(null);
 
   const openDeleteModal = (id: number) => {
-    setSelectedCycleId(id);
+    setSelectedPeriodId(id);
     modalRef.current?.showModal();
   };
 
   const handleDelete = () => {
-    if (selectedCycleId) {
-      deleteCycle.mutate(selectedCycleId, {
+    if (selectedPeriodId) {
+      deletePeriod.mutate(selectedPeriodId, {
         onSuccess: () => {
           modalRef.current?.close();
-          setSelectedCycleId(null);
+          setSelectedPeriodId(null);
         },
       });
     }
@@ -75,7 +66,7 @@ export const PeriodHistoryList = () => {
     );
   }
 
-  if (!cycles || cycles.length === 0) {
+  if (!periods || periods.length === 0) {
     return (
       <div className="text-center p-8 bg-base-200 rounded-lg">
         <p className="opacity-70">You haven't logged any periods yet.</p>
@@ -88,11 +79,11 @@ export const PeriodHistoryList = () => {
 
   return (
     <>
-      <dialog ref={modalRef} id="delete_cycle_modal" className="modal">
+      <dialog ref={modalRef} id="delete_period_modal" className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg">Confirm Deletion</h3>
           <p className="py-4">
-            Are you sure you want to delete this period cycle? This action will
+            Are you sure you want to delete this period? This action will
             also remove all associated daily logs and cannot be undone.
           </p>
           <div className="modal-action">
@@ -100,17 +91,17 @@ export const PeriodHistoryList = () => {
               type="button"
               className="btn"
               onClick={() => modalRef.current?.close()}
-              disabled={deleteCycle.isPending}
+              disabled={deletePeriod.isPending}
             >
               Cancel
             </button>
             <button
               type="button"
-              className={`btn btn-error ${deleteCycle.isPending ? "btn-disabled" : ""}`}
+              className={`btn btn-error ${deletePeriod.isPending ? "btn-disabled" : ""}`}
               onClick={handleDelete}
-              disabled={deleteCycle.isPending}
+              disabled={deletePeriod.isPending}
             >
-              {deleteCycle.isPending && (
+              {deletePeriod.isPending && (
                 <span className="loading loading-spinner" />
               )}
               Delete
@@ -118,7 +109,7 @@ export const PeriodHistoryList = () => {
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button type="button" onClick={() => setSelectedCycleId(null)}>
+          <button type="button" onClick={() => setSelectedPeriodId(null)}>
             close
           </button>
         </form>
@@ -135,19 +126,19 @@ export const PeriodHistoryList = () => {
             </tr>
           </thead>
           <tbody>
-            {cycles.map(cycle => {
-              const isOngoing = !cycle.endDate || !isValid(cycle.endDate);
+            {periods.map(period => {
+              const isOngoing = !period.endDate || !isValid(period.endDate);
               const duration =
-                !isOngoing && cycle.endDate
-                  ? differenceInDays(cycle.endDate, cycle.startDate) + 1
-                  : differenceInDays(new Date(), cycle.startDate) + 1;
+                !isOngoing && period.endDate
+                  ? differenceInDays(period.endDate, period.startDate) + 1
+                  : differenceInDays(new Date(), period.startDate) + 1;
 
               return (
-                <tr key={cycle.id}>
-                  <td>{format(cycle.startDate, "MMMM d, yyyy")}</td>
+                <tr key={period.id}>
+                  <td>{format(period.startDate, "MMMM d, yyyy")}</td>
                   <td>
-                    {!isOngoing && cycle.endDate
-                      ? format(cycle.endDate, "MMMM d, yyyy")
+                    {!isOngoing && period.endDate
+                      ? format(period.endDate, "MMMM d, yyyy")
                       : "Ongoing"}
                   </td>
                   <td>
@@ -159,8 +150,8 @@ export const PeriodHistoryList = () => {
                     <button
                       type="button"
                       className="btn btn-ghost btn-xs text-error"
-                      onClick={() => cycle.id && openDeleteModal(cycle.id)}
-                      disabled={!cycle.id}
+                      onClick={() => period.id && openDeleteModal(period.id)}
+                      disabled={!period.id}
                     >
                       Delete
                     </button>

@@ -5,7 +5,6 @@ import { format, startOfToday } from "date-fns";
 import type { FC } from "react";
 import { db } from "@/lib/db";
 
-// Zod schema for validating individual date fields.
 // Cross-field validation is handled by the form logic itself.
 const PastCycleFieldSchema = z
   .string()
@@ -21,50 +20,37 @@ interface PastCycle {
   endDate: string;
 }
 
-/**
- * A custom hook that provides a mutation function to add a new past cycle record to the database.
- * It handles invalidation of relevant queries to ensure the UI is updated on success.
- *
- * @returns A TanStack Query mutation object.
- */
-const useAddPastCycle = () => {
+const useAddPastPeriod = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (newCycle: PastCycle) => {
       // Convert string dates from the form into Date objects for the database
-      return db.cycles.add({
+      return db.periods.add({
         startDate: new Date(newCycle.startDate),
         endDate: new Date(newCycle.endDate),
       });
     },
     onSuccess: () => {
-      // Invalidate and refetch the cycles query to update lists and calendars
-      return queryClient.invalidateQueries({ queryKey: ["cycles"] });
+      return queryClient.invalidateQueries({ queryKey: ["periods"] });
     },
     onError: error => {
       // TODO: Replace with a user-facing notification (e.g., a toast)
-      console.error("Failed to add past cycle:", error);
+      console.error("Failed to add past period:", error);
     },
   });
 };
 
 interface LogPastPeriodFormProps {
-  /** Callback executed when the form is successfully submitted. */
   onSuccess: () => void;
-  /** Callback executed when the user cancels the form. */
   onCancel: () => void;
 }
 
-/**
- * A form component for logging a past period cycle. It includes date pickers
- * for start and end dates and performs validation before submission.
- */
 export const LogPastPeriodForm: FC<LogPastPeriodFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const addPastCycleMutation = useAddPastCycle();
+  const addPastCycleMutation = useAddPastPeriod();
 
   const form = useForm({
     defaultValues: {

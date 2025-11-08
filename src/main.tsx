@@ -2,7 +2,6 @@ import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 
-// Import the database instance
 import { db } from './lib/db';
 
 import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx';
@@ -10,7 +9,6 @@ import { routeTree } from './routeTree.gen'; // Import the generated route tree
 import './styles.css';
 import reportWebVitals from './reportWebVitals.ts';
 
-// --- Router and Context Setup ---
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext();
 const router = createRouter({
   routeTree,
@@ -30,16 +28,15 @@ declare module '@tanstack/react-router' {
   }
 }
 
-// --- Application Entry Point ---
 async function main() {
   try {
-    // 1. Ensure the database is open and ready before rendering the app.
+    //  Ensure the database is open and ready before rendering the app.
     // This is crucial for preventing race conditions where the app tries to
     // query the database before it has been initialized.
     await db.open();
     console.log('Database initialized successfully.');
 
-    // 2. Render the app once the database is ready.
+    // Render the app once the database is ready.
     const rootElement = document.getElementById('app');
     if (rootElement && !rootElement.innerHTML) {
       const root = ReactDOM.createRoot(rootElement);

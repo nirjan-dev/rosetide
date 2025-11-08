@@ -1,46 +1,38 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { PeriodLoggingCard } from '@/modules/cycles/components/PeriodLoggingCard';
-import { CalendarView } from '@/modules/cycles/components/CalendarView';
-import { LogPastPeriodModal } from '@/modules/cycles/components/LogPastPeriodModal';
-import { PeriodHistoryList } from '@/modules/cycles/components/PeriodHistoryList';
+import { PeriodLoggingCard } from '@/modules/periods/components/PeriodLoggingCard';
+import { CalendarView } from '@/modules/periods/components/CalendarView';
+import { LogPastPeriodModal } from '@/modules/periods/components/LogPastPeriodModal';
+import { PeriodHistoryList } from '@/modules/periods/components/PeriodHistoryList';
 import {
-  useAllCycles,
+  useAllPeriods,
   useCancelPeriod,
   useEndPeriod,
   useStartPeriod,
   useUpdatePeriodDay,
-} from '@/modules/cycles/hooks/useCycleLogs';
+} from '@/modules/periods/hooks/usePeriodLogs';
 import {
   useAutomaticDailyLogging,
-  useCycleState,
-} from '@/modules/cycles/hooks/useCycleState';
+  usePeriodState,
+} from '@/modules/periods/hooks/usePeriodState';
 import { isSameDay } from '@/utils/datetime';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
 });
 
-/**
- * The main home page for the application.
- *
- * This component orchestrates the data flow and state management for the
- * primary user-facing features: logging period cycles and viewing the
- * history on a calendar.
- */
+
 function HomePage() {
   const [activeView, setActiveView] = useState<'calendar' | 'list'>('calendar');
   const [calendarDate, setCalendarDate] = useState(new Date());
   const today = new Date();
 
-  // --- Data Fetching & State ---
-  const allCycles = useAllCycles();
-  const { activeCycle, isPeriodActive, todayLog } = useCycleState();
+  const allPeriods = useAllPeriods();
+  const { activePeriod, isPeriodActive, todayLog } = usePeriodState();
 
   // This hook handles creating a new log for today if a period is active
   useAutomaticDailyLogging();
 
-  // --- Mutations ---
   const startPeriod = useStartPeriod();
   const endPeriod = useEndPeriod();
   const cancelPeriod = useCancelPeriod();
@@ -52,48 +44,31 @@ function HomePage() {
     cancelPeriod.isPending ||
     updatePeriodDay.isPending;
 
-  // --- Event Handlers ---
 
-  /**
-   * Starts a new period cycle.
-   */
   const handleStartPeriod = () => {
     startPeriod.mutate();
   };
 
-  /**
-   * Ends the current active period cycle.
-   */
   const handleEndPeriod = () => {
-    // Check for existence of activeCycle and its id before mutating.
-    if (activeCycle?.id) {
-      endPeriod.mutate(activeCycle.id);
+    if (activePeriod?.id) {
+      endPeriod.mutate(activePeriod.id);
     }
   };
 
-  /**
-   * Cancels the active period, but only if it was started today.
-   */
   const handleCancelPeriod = () => {
-    // Check for existence of activeCycle and its id before mutating.
-    if (activeCycle?.id) {
-      cancelPeriod.mutate(activeCycle.id);
+    if (activePeriod?.id) {
+      cancelPeriod.mutate(activePeriod.id);
     }
   };
 
-  /**
-   * Updates the flow intensity for today's log entry.
-   */
   const handleFlowChange = (newIntensity: number) => {
-    // Check for existence of todayLog and its id before mutating.
     if (todayLog?.id) {
       updatePeriodDay.mutate({ id: todayLog.id, flowIntensity: newIntensity });
     }
   };
 
-  // --- Render Logic ---
 
-  if (allCycles === undefined) {
+  if (allPeriods === undefined) {
     return (
       <div className="flex justify-center items-center h-screen">
         <span className="loading loading-spinner loading-lg"></span>
@@ -103,7 +78,7 @@ function HomePage() {
 
   // A period can only be cancelled on the same day it was started.
   const canCancelPeriod =
-    activeCycle ? isSameDay(activeCycle.startDate, today) : false;
+    activePeriod ? isSameDay(activePeriod.startDate, today) : false;
 
   return (
     <main className="container max-w-lg mx-auto py-4 px-6 flex flex-col items-center gap-8">
@@ -124,7 +99,6 @@ function HomePage() {
 
       <div className="w-full max-w-2xl">
         <div role="tablist" className="tabs tabs-border mb-4">
-          {/* biome-ignore lint/a11y/useAnchorContent: <explanation> */}
           <a
             role="tab"
             className={`tab ${activeView === 'calendar' ? 'tab-active' : ''}`}
@@ -133,7 +107,6 @@ function HomePage() {
           >
             Calendar
           </a>
-          {/* biome-ignore lint/a11y/useAnchorContent: <explanation> */}
           <a
             role="tab"
             className={`tab ${activeView === 'list' ? 'tab-active' : ''}`}
@@ -147,7 +120,7 @@ function HomePage() {
         {activeView === 'calendar' ? (
           <CalendarView
             displayDate={calendarDate}
-            cycles={allCycles}
+            periods={allPeriods}
             onMonthChange={setCalendarDate}
           />
         ) : (

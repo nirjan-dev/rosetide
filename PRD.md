@@ -1,4 +1,4 @@
-# Period Tracker App - Product Requirements Document (v2: Privacy-First SPA)
+# Rostetide - Period Tracker App - Product Requirements Document (v2: Privacy-First SPA)
 
 ## 1. Product Overview
 
@@ -13,7 +13,7 @@ Create a fast, private, and intuitive period tracking Progressive Web App (PWA) 
 
 ### Core Value Proposition
 - **100% Private:** All data is stored locally on your device and never sent to a server.
-- **Lightning-fast logging:** Log your cycle in under 30 seconds.
+- **Lightning-fast logging:** Log your period in under 30 seconds.
 - **Works entirely offline:** No internet connection is required after the initial load.
 - **Simple, beautiful interface:** Designed for a delightful user experience.
 - **No Account Needed:** Start tracking immediately without signing up.
@@ -43,15 +43,15 @@ Create a fast, private, and intuitive period tracking Progressive Web App (PWA) 
 - **Performance Target:** < 1 second load times.
 
 ### Data Model (Dexie Schema + Zod Validation)
-The data is structured to clearly separate a period cycle from its daily logs. This allows for efficient querying and a clear representation of user data.
+The data is structured to clearly separate a period from its daily logs. This allows for efficient querying and a clear representation of user data.
 
-- **`cycles` Table:** Stores one record for each complete period.
+- **`periods` Table:** Stores one record for each complete period.
   - `id` (auto-incrementing primary key)
   - `startDate` (Date) - The first day of the period.
   - `endDate` (Date, optional) - The last day of the period. An ongoing period has a `null` or `undefined` `endDate`.
-- **`periodDays` Table:** Stores daily logs that belong to a specific cycle.
+- **`periodDays` Table:** Stores daily logs that belong to a specific period.
   - `id` (auto-incrementing primary key)
-  - `cycleId` (number) - A foreign key referencing the `id` in the `cycles` table.
+  - `periodId` (number) - A foreign key referencing the `id` in the `period` table.
   - `date` (Date) - The specific date of the log.
   - `flowIntensity` (number) - The recorded flow intensity for that day (scale 1-5).
 - Use Zod for runtime validation of all data before it's written to the local database.
@@ -63,7 +63,7 @@ The data is structured to clearly separate a period cycle from its daily logs. T
    - Start/stop period logging.
    - Flow intensity tracking (1-5 scale).
    - Log past periods with start and end dates.
-   - Calendar and list views of past and current cycles.
+   - Calendar and list views of past and current periods.
 
 2. **Symptom Logging**
    - Quick 1-5 scale for: Flow, Mood, Pain, Energy, Bloating, Cravings.
@@ -79,7 +79,7 @@ The data is structured to clearly separate a period cycle from its daily logs. T
    - Ability to export all data to a JSON file.
    - Ability to import data from a previously exported file.
    - A clear "Delete All My Data" button.
-   - Ability to delete individual cycles from the history view.
+   - Ability to delete individual periods from the history view.
 
 5. **PWA Functionality**
    - Service worker for instant loading.
@@ -121,9 +121,9 @@ The data is structured to clearly separate a period cycle from its daily logs. T
 
 #### Analysis Flow
 1. Navigate to the "History" or "Calendar" tab.
-2. See cycle history and patterns in the preferred view.
+2. See period history and patterns in the preferred view.
 3. Log a past period via the dedicated button.
-4. Delete a specific cycle from the history list.
+4. Delete a specific period from the history list.
 5. View predictions for the next period.
 
 ### Performance Requirements
@@ -144,7 +144,7 @@ The data is structured to clearly separate a period cycle from its daily logs. T
 - [ ] Set up GitHub Actions workflow for CI.
 
 **Local Data Persistence**
-- [x] Set up Dexie.js and define IndexedDB schemas for cycles and symptoms.
+- [x] Set up Dexie.js and define IndexedDB schemas for periods and symptoms.
 - [x] Create Zod schemas for all data models.
 - [x] Set up React Query client to interact with Dexie.js.
 - [x] Implement data access hooks (e.g., `useCycles`, `addCycleEntry`).
@@ -154,8 +154,8 @@ The data is structured to clearly separate a period cycle from its daily logs. T
 - [x] Build the main UI for period start/stop functionality.
 - [x] Build the calendar view component using Radix UI Calendar.
 - [x] Implement UI for logging past periods.
-- [x] Add a list view for cycle history with delete functionality.
-- [x] Implement cycle calculation logic.
+- [x] Add a list view for period history with delete functionality.
+- [x] Implement period calculation logic.
 - [x] Connect UI to local data hooks with comprehensive error handling and loading states.
 
 ### Priority 2: User Experience Essentials
@@ -168,8 +168,8 @@ The data is structured to clearly separate a period cycle from its daily logs. T
 - [ ] Add notes and medication fields.
 
 **Predictions & Basic Analytics**
-- [ ] Implement a simple cycle prediction algorithm.
-- [ ] Calculate and display average cycle length.
+- [ ] Implement a simple period prediction algorithm.
+- [ ] Calculate and display average period length.
 - [ ] Build prediction display components using DaisyUI cards.
 - [ ] Implement error handling for insufficient data scenarios.
 
@@ -228,11 +228,11 @@ periodos/
 │   ├── components/
 │   │   └── ui/               # Shared, simple UI components (Button, Card, Input)
 │   ├── modules/              # Core application domains (previously `features`)
-│   │   ├── cycles/           # Domain: Everything related to period cycles
-│   │   │   ├── components/   # React components specific to cycles (e.g., CalendarView)
-│   │   │   ├── hooks/        # React hooks for cycle logic (e.g., useAllCycles)
-│   │   │   ├── types.ts      # TypeScript types and Zod schemas for cycles
-│   │   │   └── index.ts      # Public API for the 'cycles' module
+│   │   ├── periods/           # Domain: Everything related to periods
+│   │   │   ├── components/   # React components specific to periods (e.g., CalendarView)
+│   │   │   ├── hooks/        # React hooks for periods logic (e.g., useAllPeriods)
+│   │   │   ├── types.ts      # TypeScript types and Zod schemas for periods
+│   │   │   └── index.ts      # Public API for the 'periods' module
 │   │   ├── symptoms/         # Domain: Everything related to symptom logging
 │   │   └── settings/         # Domain: Data import/export, themes, etc.
 │   ├── lib/
@@ -248,7 +248,7 @@ periodos/
 └── tsconfig.json
 ```
 **Module Communication:**
-- A module (e.g., `cycles`) should only expose what is necessary through its `index.ts` file.
+- A module (e.g., `periods`) should only expose what is necessary through its `index.ts` file.
 - Other parts of the application should only import from a module's public API.
 
 ### Code Style
@@ -271,7 +271,7 @@ To maintain a clean and readable codebase, the following styles are enforced:
 
 ### Maintenance
 - Clear code documentation and type safety with TypeScript and Zod.
-- Automated testing pipeline for core logic (cycle calculations, data validation).
+- Automated testing pipeline for core logic (period calculations, data validation).
 - Easy, one-command deployment process for the static site.
 
 ## 8. Future Considerations

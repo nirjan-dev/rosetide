@@ -3,21 +3,10 @@ interface FlowIntensitySliderProps {
    * The current intensity value, from 1 to 5.
    */
   value: number;
-  /**
-   * Callback function that is fired when the user selects a new intensity.
-   */
   onChange: (newIntensity: number) => void;
-  /**
-   * Disables the input if set to true.
-   * @default false
-   */
   disabled?: boolean;
 }
 
-/**
- * A UI component for selecting menstrual flow intensity on a 1-5 scale.
- * It is implemented as a controlled component using a DaisyUI "rating" input.
- */
 export function FlowIntensitySlider({
   value,
   onChange,
