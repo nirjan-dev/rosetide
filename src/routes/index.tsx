@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import { PredictionCard } from '@/modules/periods/components/PredictionCard';
 import { PeriodLoggingCard } from '@/modules/periods/components/PeriodLoggingCard';
 import { CalendarView } from '@/modules/periods/components/CalendarView';
 import { LogPastPeriodModal } from '@/modules/periods/components/LogPastPeriodModal';
@@ -83,6 +84,7 @@ function HomePage() {
   return (
     <main className="container max-w-lg mx-auto py-4 px-6 flex flex-col items-center gap-8">
       <div className="w-full max-w-md flex flex-col gap-8 center">
+        <PredictionCard />
         <PeriodLoggingCard
           currentDate={today}
           isPeriodActive={isPeriodActive}

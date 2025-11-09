@@ -168,10 +168,10 @@ The data is structured to clearly separate a period from its daily logs. This al
 - [ ] Add notes and medication fields.
 
 **Predictions & Basic Analytics**
-- [ ] Implement a simple period prediction algorithm.
-- [ ] Calculate and display average period length.
-- [ ] Build prediction display components using DaisyUI cards.
-- [ ] Implement error handling for insufficient data scenarios.
+- [x] Implement a simple period prediction algorithm.
+- [x] Calculate and display average period length.
+- [x] Build prediction display components using DaisyUI cards.
+- [x] Implement error handling for insufficient data scenarios.
 
 **PWA & Offline Capability**
 - [ ] Implement a service worker with a comprehensive caching strategy.

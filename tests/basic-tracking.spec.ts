@@ -53,4 +53,16 @@ test.describe('Basic Period Tracking Feature', () => {
     // The "End Period" button should no longer be in the DOM.
     await expect(endButton).not.toBeVisible();
   });
+
+  test('should show an "insufficient data" message when there are less than two periods', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    // Check for the "insufficient data" message.
+    const insufficientDataMessage = page.getByText(
+      'Log at least two full periods to see your next period prediction.',
+    );
+    await expect(insufficientDataMessage).toBeVisible();
+  });
 });
