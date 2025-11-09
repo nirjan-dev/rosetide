@@ -64,7 +64,12 @@ export const PredictionCard = () => {
   return (
     <>
       {!hasSufficientData ? (
-        <InsufficientDataCard />
+        <div>
+          <InsufficientDataCard />
+          <div className="hidden">
+            <LogPastPeriodModal />
+          </div>
+        </div>
       ) : (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body items-center text-center">
@@ -94,7 +99,6 @@ export const PredictionCard = () => {
           </div>
         </div>
       )}
-      <LogPastPeriodModal />
     </>
   );
 };

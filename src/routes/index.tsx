@@ -85,8 +85,6 @@ function HomePage() {
   return (
     <main className="container max-w-lg mx-auto py-4 px-6 flex flex-col items-center gap-8">
       <div className="w-full max-w-md flex flex-col gap-8 center">
-        <PredictionCard />
-        <FertilityCard />
         <PeriodLoggingCard
           currentDate={today}
           isPeriodActive={isPeriodActive}
@@ -99,6 +97,10 @@ function HomePage() {
           canCancel={canCancelPeriod}
         />
         <LogPastPeriodModal />
+
+        <PredictionCard />
+        <FertilityCard />
+
       </div>
 
       <div className="w-full max-w-2xl">

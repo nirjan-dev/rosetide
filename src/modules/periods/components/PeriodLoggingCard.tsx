@@ -13,7 +13,6 @@ interface PeriodLoggingCardProps {
 }
 
 export function PeriodLoggingCard({
-  currentDate,
   isPeriodActive,
   flowIntensity,
   onStartPeriod,
@@ -23,18 +22,14 @@ export function PeriodLoggingCard({
   isLoading = false,
   canCancel = false,
 }: PeriodLoggingCardProps) {
-  const formattedDate = currentDate.toLocaleDateString(undefined, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+
 
   return (
     <div className="card w-full max-w-md bg-base-100 shadow-xl">
       <div className="card-body items-center text-center">
-        <h2 className="card-title text-2xl">Hello!</h2>
-        <p className="mb-4 text-base-content/80">{formattedDate}</p>
+        <h2 className="card-title text-2xl">Welcome to Rosetide</h2>
+        <img src="/images/logo.svg" className="w-16 h-16" alt="rosetide logo" />
+        <p className="mb-4 text-base-content/80">Track you period and fertility. No servers, 100% local secure tracking. Free Forever.</p>
 
         <div className="card-actions justify-center w-full">
           {isPeriodActive ? (
