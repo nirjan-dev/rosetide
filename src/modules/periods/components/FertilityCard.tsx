@@ -1,4 +1,4 @@
-import { Heart, Info, Leaf, Sparkles } from 'lucide-react';
+import { Heart, Leaf, Sparkles } from 'lucide-react';
 import { useFertilityPrediction } from '@/modules/periods/hooks/useFertilityPrediction';
 import { differenceInDays, isSameDay } from '@/utils/datetime';
 
@@ -92,7 +92,8 @@ export function FertilityCard() {
           <h2 className="card-title text-base font-medium text-base-content/70">
             Fertility Prediction
           </h2>
-          <div
+          {/* TODO: fix overflow on mobile issue due to the tooltip */}
+          {/* <div
             className="tooltip"
             data-tip=""
           >
@@ -102,7 +103,7 @@ export function FertilityCard() {
               </div>
             </div>
             <Info size={18} className="text-base-content/50 cursor-help" />
-          </div>
+          </div>*/}
         </div>
 
         <div className="flex items-center gap-4 mt-2">

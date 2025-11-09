@@ -114,7 +114,7 @@ export function CalendarView({
 
           {calendarGrid.map((day, index) => {
             if (day === null) {
-              return <div key={`blank-${index}`} className="h-10 w-10"></div>;
+              return <div key={`blank-${index}`} className="w-full aspect-square"></div>;
             }
 
             const currentDate = new Date(year, month, day);
@@ -125,7 +125,7 @@ export function CalendarView({
             const isOvulationDayFlag = ovulationDay === currentDateStr;
 
             let dayClasses =
-              'grid h-10 w-10 place-content-center rounded-full transition-colors';
+              'grid w-full aspect-square place-content-center rounded-full transition-colors';
             let ringClasses = '';
 
             // Apply styles with a clear priority
@@ -133,14 +133,14 @@ export function CalendarView({
               dayClasses += ' bg-green-200 text-green-800';
             if (isOvulationDayFlag)
               dayClasses =
-                'grid h-10 w-10 place-content-center rounded-full font-bold transition-colors bg-green-300 text-green-900';
+                'grid w-full aspect-square place-content-center rounded-full font-bold transition-colors bg-green-300 text-green-900';
             if (isPeriodDayFlag)
               dayClasses =
-                'grid h-10 w-10 place-content-center rounded-full transition-colors bg-red-200 text-red-800';
+                'grid w-full aspect-square place-content-center rounded-full transition-colors bg-red-200 text-red-800';
 
             if (isTodayFlag) {
               dayClasses =
-                'grid h-10 w-10 place-content-center rounded-full transition-colors bg-primary text-primary-content';
+                'grid w-full aspect-square place-content-center rounded-full transition-colors bg-primary text-primary-content';
               if (isPeriodDayFlag) ringClasses = ' ring-2 ring-red-300';
               else if (isOvulationDayFlag)
                 ringClasses = ' ring-2 ring-green-400';
