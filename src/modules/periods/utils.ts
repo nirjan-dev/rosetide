@@ -1,43 +1,6 @@
 import type { Period } from '@/modules/periods/types';
+import { addDays, differenceInDays } from '@/utils/datetime';
 
-// #region Date Utilities
-// These are simple, date-fns-like utilities to avoid adding a dependency for now.
-
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
-
-/**
- * Calculates the difference in full days between two dates, ignoring time and timezone.
- * @param dateLeft The later date.
- * @param dateRight The earlier date.
- * @returns The number of full days between the two dates.
- */
-function differenceInDays(dateLeft: Date, dateRight: Date): number {
-  const utcLeft = Date.UTC(
-    dateLeft.getFullYear(),
-    dateLeft.getMonth(),
-    dateLeft.getDate(),
-  );
-  const utcRight = Date.UTC(
-    dateRight.getFullYear(),
-    dateRight.getMonth(),
-    dateRight.getDate(),
-  );
-
-  return Math.floor((utcLeft - utcRight) / MS_PER_DAY);
-}
-
-/**
- * Adds a specified number of days to a date.
- * @param date The date to add days to.
- * @param amount The number of days to add.
- * @returns A new Date object with the days added.
- */
-function addDays(date: Date, amount: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + amount);
-  return result;
-}
-// #endregion
 
 export interface PredictionAnalytics {
   predictedStartDate: Date | null;
@@ -46,6 +9,14 @@ export interface PredictionAnalytics {
   hasSufficientData: boolean;
   cycleLengths: Array<number>;
   completedPeriodsCount: number;
+}
+
+export interface FertilityPrediction {
+  fertileWindowStartDate: Date | null;
+  fertileWindowEndDate: Date | null;
+  ovulationDate: Date | null;
+  hasSufficientData: boolean;
+  status: 'predicting' | 'insufficient_data';
 }
 
 /**
@@ -128,5 +99,44 @@ export const calculatePeriodAnalytics = (
     hasSufficientData: true,
     cycleLengths,
     completedPeriodsCount,
+  };
+};
+
+/**
+ * Calculates the fertile window and ovulation day based on period analytics.
+ * The standard calculation assumes ovulation occurs ~14 days before the next period.
+ * The fertile window is the 5 days before ovulation plus ovulation day.
+ *
+ * @param periods - An array of `Period` objects, sorted by `startDate` in ascending order.
+ * @returns An object containing the fertility prediction data.
+ */
+export const calculateFertilityWindow = (
+  periods: Array<Period>,
+): FertilityPrediction => {
+  const analytics = calculatePeriodAnalytics(periods);
+
+  if (!analytics.hasSufficientData || !analytics.predictedStartDate) {
+    return {
+      fertileWindowStartDate: null,
+      fertileWindowEndDate: null,
+      ovulationDate: null,
+      hasSufficientData: false,
+      status: 'insufficient_data',
+    };
+  }
+
+  // Ovulation is typically 14 days before the start of the next period.
+  const ovulationDate = addDays(analytics.predictedStartDate, -14);
+  // The fertile window starts 5 days before ovulation.
+  const fertileWindowStartDate = addDays(ovulationDate, -5);
+  // The fertile window ends on the day of ovulation.
+  const fertileWindowEndDate = ovulationDate;
+
+  return {
+    fertileWindowStartDate,
+    fertileWindowEndDate,
+    ovulationDate,
+    hasSufficientData: true,
+    status: 'predicting',
   };
 };

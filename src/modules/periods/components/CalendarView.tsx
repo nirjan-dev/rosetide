@@ -1,4 +1,7 @@
+import { useMemo } from 'react';
+import { Info } from 'lucide-react';
 import type { Period } from '@/modules/periods/types';
+import { useFertilityPrediction } from '@/modules/periods/hooks/useFertilityPrediction';
 import { isSameDay } from '@/utils/datetime';
 
 interface CalendarViewProps {
@@ -8,7 +11,6 @@ interface CalendarViewProps {
   className?: string;
 }
 
-// Static array for the days of the week header.
 const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function CalendarView({
@@ -18,54 +20,67 @@ export function CalendarView({
   className,
 }: CalendarViewProps) {
   const year = displayDate.getFullYear();
-  const month = displayDate.getMonth(); // 0-indexed (January is 0)
-
+  const month = displayDate.getMonth();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Create a set of date strings for efficient lookup of period days.
-  // This logic now iterates through date ranges for each period.
-  const periodDays = new Set<string>();
-  periods.forEach((period) => {
-    const startDate = new Date(period.startDate);
-    // If the period is ongoing (no end date), highlight up to today.
-    // Otherwise, use the specified end date.
-    const endDate = period.endDate ? new Date(period.endDate) : today;
+  const prediction = useFertilityPrediction();
 
-    for (
-      let d = new Date(startDate);
-      d <= endDate;
-      d.setDate(d.getDate() + 1)
-    ) {
-      periodDays.add(d.toDateString());
+  // Memoize lookup sets for performance.
+  // These will only be recalculated when the underlying data changes.
+  const { periodDays, fertileDays, ovulationDay } = useMemo(() => {
+    const periodDaysSet = new Set<string>();
+    periods.forEach(period => {
+      const startDate = new Date(period.startDate);
+      const endDate = period.endDate ? new Date(period.endDate) : today;
+      for (
+        let d = new Date(startDate);
+        d <= endDate;
+        d.setDate(d.getDate() + 1)
+      ) {
+        periodDaysSet.add(d.toDateString());
+      }
+    });
+
+    const fertileDaysSet = new Set<string>();
+    let _ovulationDay: string | null = null;
+
+    if (prediction.hasSufficientData && prediction.fertileWindowStartDate) {
+      const { fertileWindowStartDate, fertileWindowEndDate, ovulationDate } =
+        prediction;
+      // The end of the fertile window is the ovulation day
+      const end = fertileWindowEndDate ?? today;
+      for (
+        let d = new Date(fertileWindowStartDate);
+        d <= end;
+        d.setDate(d.getDate() + 1)
+      ) {
+        fertileDaysSet.add(d.toDateString());
+      }
+      if (ovulationDate) {
+        _ovulationDay = new Date(ovulationDate).toDateString();
+      }
     }
-  });
+
+    return { periodDays: periodDaysSet, fertileDays: fertileDaysSet, ovulationDay: _ovulationDay };
+  }, [periods, prediction, today]);
 
   const firstDayOfMonth = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  // Determine the day of the week the month starts on (0 for Sunday, 6 for Saturday)
   const startDayOfWeek = firstDayOfMonth.getDay();
 
-  // Create an array representing the calendar grid.
-  // It includes `null` values for padding days from the previous month.
   const calendarGrid: Array<number | null> = [
     ...Array(startDayOfWeek).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
-  const handlePrevMonth = () => {
-    onMonthChange(new Date(year, month - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    onMonthChange(new Date(year, month + 1, 1));
-  };
+  const handlePrevMonth = () => onMonthChange(new Date(year, month - 1, 1));
+  const handleNextMonth = () => onMonthChange(new Date(year, month + 1, 1));
 
   return (
     <div className={`card w-full max-w-md bg-base-100 shadow-xl ${className}`}>
       <div className="card-body">
-        {/* Header with month navigation */}
+        {/* Header */}
         <div className="flex items-center justify-between pb-4">
           <button
             className="btn btn-ghost btn-circle"
@@ -91,37 +106,49 @@ export function CalendarView({
 
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-2 text-center">
-          {/* Weekday headers */}
-          {WEEK_DAYS.map((day) => (
+          {WEEK_DAYS.map(day => (
             <div key={day} className="text-sm font-bold text-base-content/60">
               {day}
             </div>
           ))}
 
-          {/* Day cells */}
           {calendarGrid.map((day, index) => {
             if (day === null) {
-              // Render blank divs for padding days
               return <div key={`blank-${index}`} className="h-10 w-10"></div>;
             }
 
             const currentDate = new Date(year, month, day);
+            const currentDateStr = currentDate.toDateString();
             const isTodayFlag = isSameDay(currentDate, today);
-            const isPeriodDayFlag = periodDays.has(currentDate.toDateString());
+            const isPeriodDayFlag = periodDays.has(currentDateStr);
+            const isFertileDayFlag = fertileDays.has(currentDateStr);
+            const isOvulationDayFlag = ovulationDay === currentDateStr;
 
-            // Build class names conditionally for styling
             let dayClasses =
               'grid h-10 w-10 place-content-center rounded-full transition-colors';
+            let ringClasses = '';
+
+            // Apply styles with a clear priority
+            if (isFertileDayFlag)
+              dayClasses += ' bg-green-200 text-green-800';
+            if (isOvulationDayFlag)
+              dayClasses =
+                'grid h-10 w-10 place-content-center rounded-full font-bold transition-colors bg-green-300 text-green-900';
+            if (isPeriodDayFlag)
+              dayClasses =
+                'grid h-10 w-10 place-content-center rounded-full transition-colors bg-red-200 text-red-800';
+
             if (isTodayFlag) {
-              dayClasses += ' bg-primary text-primary-content';
-            }
-            if (isPeriodDayFlag && !isTodayFlag) {
-              dayClasses += ' bg-red-200 text-red-800';
-            }
-            // Add a distinct style if the day is both today and a period day
-            if (isPeriodDayFlag && isTodayFlag) {
-              dayClasses +=
-                ' bg-primary ring-2 ring-red-300 ring-offset-1 ring-offset-base-100';
+              dayClasses =
+                'grid h-10 w-10 place-content-center rounded-full transition-colors bg-primary text-primary-content';
+              if (isPeriodDayFlag) ringClasses = ' ring-2 ring-red-300';
+              else if (isOvulationDayFlag)
+                ringClasses = ' ring-2 ring-green-400';
+              else if (isFertileDayFlag)
+                ringClasses = ' ring-2 ring-green-200';
+              if (ringClasses)
+                ringClasses += ' ring-offset-1 ring-offset-base-100';
+              dayClasses += ringClasses;
             }
 
             return (
@@ -130,6 +157,33 @@ export function CalendarView({
               </div>
             );
           })}
+        </div>
+
+        {/* Legend */}
+        <div className="mt-4 space-y-2 pt-4 border-t border-base-200">
+          <div className="flex items-center text-sm">
+            <span className="w-4 h-4 rounded-full bg-red-200 mr-2"></span>
+            <span>Period Day</span>
+          </div>
+          <div className="flex items-center text-sm">
+            <span className="w-4 h-4 rounded-full bg-green-200 mr-2"></span>
+            <span>Fertile Window</span>
+          </div>
+          <div className="flex items-center text-sm">
+            <span className="w-4 h-4 rounded-full bg-green-300 mr-2"></span>
+            <span>Est. Ovulation Day</span>
+          </div>
+          {!prediction.hasSufficientData && !prediction.isLoading && (
+            <div
+              className="tooltip tooltip-bottom w-full mt-2"
+              data-tip="The app needs at least two complete cycles to start making predictions."
+            >
+              <div className="flex items-center text-xs text-warning justify-center p-1 bg-warning/10 rounded-md">
+                <Info size={14} className="mr-1 flex-shrink-0" />
+                <span>Insufficient data for predictions.</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
