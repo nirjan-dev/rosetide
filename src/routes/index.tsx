@@ -6,6 +6,7 @@ import { PeriodLoggingCard } from '@/modules/periods/components/PeriodLoggingCar
 import { CalendarView } from '@/modules/periods/components/CalendarView';
 import { LogPastPeriodModal } from '@/modules/periods/components/LogPastPeriodModal';
 import { PeriodHistoryList } from '@/modules/periods/components/PeriodHistoryList';
+import { SettingsModal } from '@/components/SettingsModal';
 import {
   useAllPeriods,
   useCancelPeriod,
@@ -97,6 +98,7 @@ function HomePage() {
           canCancel={canCancelPeriod}
         />
         <LogPastPeriodModal />
+        <SettingsModal />
 
         <PredictionCard />
         <FertilityCard />

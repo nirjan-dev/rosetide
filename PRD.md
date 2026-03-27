@@ -76,8 +76,10 @@ The data is structured to clearly separate a period from its daily logs. This al
    - Simple confidence indicators based on data consistency.
 
 4. **Data Management**
-   - Ability to export all data to a JSON file.
-   - Ability to import data from a previously exported file.
+   - Ability to export all data to a CSV file.
+   - Ability to import data from a previously exported CSV file.
+   - Duplicate dates are automatically skipped during import.
+   - Clear success/failure feedback messages after import operations.
    - A clear "Delete All My Data" button.
    - Ability to delete individual periods from the history view.
 
@@ -112,6 +114,17 @@ The data is structured to clearly separate a period from its daily logs. This al
 - **Private:** Reassure users their data is safe and local.
 
 ### Key User Flows
+
+#### Data Export Flow
+1. Navigate to Settings (gear icon).
+2. Click "Export to CSV" to download all period data as a CSV file.
+3. The file can be opened in spreadsheets or used for backup.
+
+#### Data Import Flow
+1. Navigate to Settings.
+2. Click "Import CSV" and select a previously exported CSV file.
+3. The app imports records, skipping duplicate dates.
+4. A success or error message displays after import completes.
 
 #### Quick Logging Flow
 1. Open app → Auto-loads to today's view.
@@ -148,7 +161,7 @@ The data is structured to clearly separate a period from its daily logs. This al
 - [x] Create Zod schemas for all data models.
 - [x] Set up React Query client to interact with Dexie.js.
 - [x] Implement data access hooks (e.g., `useCycles`, `addCycleEntry`).
-- [ ] Implement data import/export functionality.
+- [x] Implement data import/export functionality (CSV format).
 
 **Core Period Tracking**
 - [x] Build the main UI for period start/stop functionality.
