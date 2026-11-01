@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { DatabaseGate } from '@/components/DatabaseGate';
+import { InstallBanner } from '@/components/InstallBanner';
 import { SettingsModal } from '@/components/SettingsModal';
 import { CalendarView } from '@/modules/periods/components/CalendarView';
 import { FertilityCard } from '@/modules/periods/components/FertilityCard';
@@ -94,6 +95,7 @@ function TrackerContent() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-4 sm:px-6 lg:py-8">
+      <InstallBanner />
       <nav className="mb-6 flex items-center justify-between" aria-label="Tracker">
         <Link to="/" className="link link-hover text-sm">
           ← About Rosetide
