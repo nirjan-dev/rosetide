@@ -1,22 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
 import { differenceInDays, format, isValid } from "date-fns";
 import { useRef, useState } from "react";
 import { useDeletePeriod } from "../hooks/useDeletePeriod";
-import { db } from "@/lib/db";
-
-export const usePeriods = () => {
-  return useQuery({
-    queryKey: ["periods"],
-    queryFn: async () => {
-      const periods = await db.periods.orderBy("startDate").reverse().toArray();
-      return periods;
-    },
-  });
-};
-
+import { useAllPeriods } from "@/modules/periods/hooks/usePeriodLogs";
 
 export const PeriodHistoryList = () => {
-  const { data: periods, isLoading, isError, error } = usePeriods();
+  // Live query: reflects every change (logging, imports, recovered records) without a reload.
+  const periods = useAllPeriods();
   const deletePeriod = useDeletePeriod();
   const modalRef = useRef<HTMLDialogElement>(null);
   const [selectedPeriodId, setSelectedPeriodId] = useState<number | null>(null);
@@ -37,7 +26,7 @@ export const PeriodHistoryList = () => {
     }
   };
 
-  if (isLoading) {
+  if (periods === undefined) {
     return (
       <div className="flex justify-center items-center p-8">
         <span className="loading loading-lg" />
@@ -45,28 +34,7 @@ export const PeriodHistoryList = () => {
     );
   }
 
-  if (isError) {
-    return (
-      <div role="alert" className="alert alert-error">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="stroke-current shrink-0 h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <span>Error loading period history: {error.message}</span>
-      </div>
-    );
-  }
-
-  if (!periods || periods.length === 0) {
+  if (periods.length === 0) {
     return (
       <div className="text-center p-8 bg-base-200 rounded-lg">
         <p className="opacity-70">You haven't logged any periods yet.</p>

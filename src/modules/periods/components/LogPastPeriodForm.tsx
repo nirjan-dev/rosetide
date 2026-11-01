@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { format, startOfToday } from "date-fns";
 import type { FC } from "react";
@@ -24,8 +24,6 @@ interface PastCycle {
 }
 
 const useAddPastPeriod = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (newCycle: PastCycle) => {
       const startDate = parseLocalDateString(newCycle.startDate);
@@ -37,9 +35,6 @@ const useAddPastPeriod = () => {
         .omit({ id: true })
         .parse({ startDate, endDate });
       return db.periods.add(validatedPeriod as Period);
-    },
-    onSuccess: () => {
-      return queryClient.invalidateQueries({ queryKey: ["periods"] });
     },
     onError: error => {
       // TODO: Replace with a user-facing notification (e.g., a toast)

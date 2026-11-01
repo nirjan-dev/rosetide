@@ -20,6 +20,12 @@ Live app: https://rosetide.net
 - Browser storage can be evicted under low-storage pressure; settings can request persisted storage where supported.
 - Estimates are calendar math only, not medical advice, contraception, or pregnancy planning.
 
+### Older versions and old addresses
+
+- Builds from Oct 16 – Nov 8, 2025 stored records in other shapes (a `Database` IndexedDB, then a `cycles` store). Before storage opens, `src/lib/legacyRescue.ts` moves those records into the current schema and keeps the originals as a backup. Opening the current schema without that step makes Dexie delete the old `cycles` store.
+- Never bump or change the Dexie schema without an explicit `version(n + 1)` upgrade: Dexie deletes stores that a same-version schema no longer declares.
+- The app was served from `periodos.nirjan.net` and `periodos.pages.dev` before `rosetide.net`. Browser storage is per address, so records saved there can only be exported from there. Keep those addresses serving the app; never redirect them to rosetide.net.
+
 ## Run it
 
 ```bash

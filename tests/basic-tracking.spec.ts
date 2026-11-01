@@ -97,4 +97,79 @@ test.describe('Basic Period Tracking Feature', () => {
     });
     expect(counts).toEqual({ periods: 0, days: 0 });
   });
+
+  test('should recover records saved by older versions instead of deleting them', async ({
+    page,
+  }) => {
+    // The landing page never opens the tracker database, so legacy data can be seeded there.
+    await page.goto('/');
+    await page.evaluate(async () => {
+      const databases = await window.indexedDB.databases();
+      for (const { name } of databases) {
+        if (!name) continue;
+        await new Promise((resolve) => {
+          const request = window.indexedDB.deleteDatabase(name);
+          request.onsuccess = request.onerror = request.onblocked = resolve;
+        });
+      }
+      const open = (name: string, upgrade: (database: IDBDatabase) => void) =>
+        new Promise<IDBDatabase>((resolve, reject) => {
+          const request = window.indexedDB.open(name, 10);
+          request.onupgradeneeded = () => upgrade(request.result);
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      const add = (database: IDBDatabase, store: string, rows: Array<object>) =>
+        new Promise((resolve, reject) => {
+          const transaction = database.transaction(store, 'readwrite');
+          rows.forEach((row) => transaction.objectStore(store).add(row));
+          transaction.oncomplete = resolve;
+          transaction.onerror = () => reject(transaction.error);
+        });
+
+      // Oct 22 - Nov 8 2025 shape: `cycles` + `periodDays.cycleId`.
+      const current = await open('periodos_db', (database) => {
+        const cycles = database.createObjectStore('cycles', { keyPath: 'id', autoIncrement: true });
+        cycles.createIndex('startDate', 'startDate');
+        cycles.createIndex('endDate', 'endDate');
+        const days = database.createObjectStore('periodDays', { keyPath: 'id', autoIncrement: true });
+        days.createIndex('cycleId', 'cycleId');
+        days.createIndex('date', 'date');
+      });
+      await add(current, 'cycles', [{ startDate: new Date(2025, 9, 23), endDate: new Date(2025, 9, 27) }]);
+      await add(current, 'periodDays', [{ cycleId: 1, date: new Date(2025, 9, 23), flowIntensity: 3 }]);
+      current.close();
+
+      // Oct 16 - 22 2025 shape: separate "Database", one row per logged day.
+      const earliest = await open('Database', (database) => {
+        database.createObjectStore('cycles', { keyPath: 'id', autoIncrement: true }).createIndex('date', 'date');
+      });
+      await add(earliest, 'cycles', [
+        { date: new Date(2025, 8, 25), type: 'periodDay', flowIntensity: 2, isEnded: false },
+        { date: new Date(2025, 8, 27), type: 'periodDay', flowIntensity: 1, isEnded: true },
+      ]);
+      earliest.close();
+    });
+
+    await page.goto('/app');
+    await page.getByRole('tab', { name: 'History' }).click();
+    await expect(page.getByText('October 23, 2025')).toBeVisible();
+    await expect(page.getByText('October 27, 2025')).toBeVisible();
+    await expect(page.getByText('September 25, 2025')).toBeVisible();
+    await expect(page.getByText('September 27, 2025')).toBeVisible();
+
+    // The original records are kept as a backup, not deleted.
+    const backupStores = await page.evaluate(
+      () =>
+        new Promise<Array<string>>((resolve, reject) => {
+          const request = window.indexedDB.open('periodos_db');
+          request.onsuccess = () => {
+            resolve([...request.result.objectStoreNames]);
+            request.result.close();
+          };
+          request.onerror = () => reject(request.error);
+        }),
+    );
+    expect(backupStores).toContain('cycles');
+  });
 });

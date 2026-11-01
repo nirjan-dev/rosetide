@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { EARLIEST_DB_NAME, EARLIEST_IMPORTED_KEY } from '@/lib/legacyRescue';
 
 export interface StorageStatus {
   persisted: boolean;
@@ -74,5 +75,12 @@ export function setLastExportDate(date: Date): void {
 export async function deleteAllLocalData(): Promise<void> {
   db.close();
   await db.delete();
+  // Records from the earliest build live in their own database; delete those too.
+  await new Promise<void>((resolve, reject) => {
+    const req = indexedDB.deleteDatabase(EARLIEST_DB_NAME);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
   localStorage.removeItem(LAST_EXPORT_KEY);
+  localStorage.removeItem(EARLIEST_IMPORTED_KEY);
 }
