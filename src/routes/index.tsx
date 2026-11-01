@@ -12,7 +12,7 @@ export const Route = createFileRoute('/')({
       { property: 'og:title', content: 'Rosetide - A private period tracker' },
       {
         property: 'og:description',
-        content: 'Know your cycle without giving up your privacy. No sign-up, no ads, no tracking.',
+        content: 'Know your cycle without giving up your privacy. No sign-up, no ads, no data tracking.',
       },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary' },
@@ -38,7 +38,7 @@ export const Route = createFileRoute('/')({
               name: 'Where does my data go?',
               acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'Nowhere. Your periods stay on your own phone or computer. Rosetide has no cloud, no ads, and no tracking.',
+                text: 'Nowhere. Your periods stay on your own phone or computer. Rosetide has no cloud, no ads, and never tracks your health data.',
               },
             },
             {
@@ -72,7 +72,7 @@ const faqs = [
   {
     question: 'Where does my data go?',
     answer:
-      'Nowhere. Your periods stay on your own phone or computer. Rosetide has no cloud, no ads, and no tracking.',
+      'Nowhere. Your periods stay on your own phone or computer. Rosetide has no cloud, no ads, and never tracks your health data.',
   },
   {
     question: 'What if I get a new phone?',
@@ -167,7 +167,7 @@ function MarketingPage() {
               <div className="mt-4 flex flex-wrap justify-center gap-2 text-sm font-semibold">
                 <span className="badge badge-lg">No sign-up</span>
                 <span className="badge badge-lg">No ads</span>
-                <span className="badge badge-lg">No tracking</span>
+                <span className="badge badge-lg">No data tracking</span>
                 <span className="badge badge-lg">No cloud</span>
               </div>
             </div>

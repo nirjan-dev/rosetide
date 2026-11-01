@@ -49,9 +49,9 @@ function PrivacyPage() {
       </p>
       <h2>Analytics and tracking</h2>
       <p>
-        Rosetide does not ask you to create an account or send period records to a product backend.
-        The hosting provider may measure aggregate page delivery. Keep sensitive health decisions out
-        of any analytics, screenshot, or support message.
+        Rosetide never sends your period records anywhere — they stay in your browser. The site
+        host counts anonymous page visits to keep the site running; these counts contain no
+        health data and cannot identify your cycle.
       </p>
     </MarketingLayout>
   );

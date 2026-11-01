@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
-import { AlertCircle, CheckCircle, Download, HardDrive, Upload } from 'lucide-react';
+import { AlertCircle, CheckCircle, Download, HardDrive, Trash2, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { downloadCSV, exportToCSV } from '@/lib/export';
 import { importFromCSV } from '@/lib/import';
-import { checkPersistedStorage, getLastExportDate, getStorageEstimate, requestPersistedStorage, setLastExportDate } from '@/lib/storage';
+import { checkPersistedStorage, deleteAllLocalData, getLastExportDate, getStorageEstimate, requestPersistedStorage, setLastExportDate } from '@/lib/storage';
 
 interface ImportResult {
   imported: number;
@@ -33,7 +33,8 @@ export function SettingsModal() {
   const [storageStatus, setStorageStatus] = useState<{ persisted: boolean; isRequesting: boolean } | null>(null);
   const [storageEstimate, setStorageEstimate] = useState<StorageEstimate | null>(null);
   const [lastExport, setLastExport] = useState<string | null>(null);
-
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const openModal = async () => {
     modalRef.current?.showModal();
     const status = await checkPersistedStorage();
@@ -46,7 +47,20 @@ export function SettingsModal() {
 
   const closeModal = () => {
     setImportResult(null);
+    setConfirmingDelete(false);
     modalRef.current?.close();
+  };
+
+  const handleDeleteAll = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAllLocalData();
+      window.location.reload();
+    } catch (error) {
+      console.error('Delete all data failed:', error);
+      setIsDeleting(false);
+      setConfirmingDelete(false);
+    }
   };
 
   const handleRequestPersistedStorage = async () => {
@@ -227,6 +241,51 @@ export function SettingsModal() {
                     </span>
                   )}
                 </div>
+              )}
+            </div>
+
+            <div className="divider"></div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-4 h-4" />
+                <span className="font-medium">Delete All Data</span>
+              </div>
+              <p className="text-sm opacity-70">
+                Permanently remove every period and daily log from this browser. Export a CSV backup first if you might want it back.
+              </p>
+              {confirmingDelete ? (
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-error">
+                    This cannot be undone. Delete everything?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-error btn-sm"
+                      onClick={handleDeleteAll}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? 'Deleting…' : 'Yes, delete everything'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setConfirmingDelete(false)}
+                      disabled={isDeleting}
+                    >
+                      Keep my data
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-outline btn-error btn-sm"
+                  onClick={() => setConfirmingDelete(true)}
+                >
+                  Delete all my data
+                </button>
               )}
             </div>
           </div>
