@@ -12,10 +12,10 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
   ],
-  // test: {
-  //   globals: true,
-  //   environment: 'jsdom',
-  // },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+  },
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),

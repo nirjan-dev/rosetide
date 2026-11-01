@@ -37,9 +37,9 @@ function getFertilityStatus(
   if (isPeak) {
     return {
       status: 'peak',
-      title: 'Peak Fertility',
+      title: 'Estimated Peak Fertility',
       Icon: Sparkles,
-      description: 'Today is your estimated ovulation day.',
+      description: 'Today matches your estimated ovulation day.',
     };
   }
 
@@ -49,22 +49,31 @@ function getFertilityStatus(
       : null;
     return {
       status: 'fertile',
-      title: 'Fertile Window',
+      title: 'Estimated Fertile Window',
       Icon: Heart,
       description:
         daysUntilOvulation !== null
-          ? `Estimated ovulation in ${daysUntilOvulation} day${daysUntilOvulation > 1 ? 's' : ''}.`
-          : 'You are in your fertile window.',
+          ? `Estimated ovulation in ${daysUntilOvulation} day${daysUntilOvulation === 1 ? '' : 's'}.`
+          : 'Today falls in your estimated fertile window.',
     };
   }
 
-  // Not fertile, calculate time until next window
+  if (today > fertileWindowEndDate) {
+    return {
+      status: 'low',
+      title: 'Previous Window Passed',
+      Icon: Leaf,
+      description: 'Your estimated fertile window already passed. Log your next period for a fresh estimate.',
+    };
+  }
+
+  // Not fertile yet, calculate time until next window
   const daysUntilFertile = differenceInDays(fertileWindowStartDate, today);
   return {
     status: 'low',
     title: 'Low Fertility',
     Icon: Leaf,
-    description: `Next fertile window in ${daysUntilFertile} day${daysUntilFertile > 1 ? 's' : ''}.`,
+    description: `Next estimated fertile window in ${daysUntilFertile} day${daysUntilFertile === 1 ? '' : 's'}.`,
   };
 }
 
@@ -73,7 +82,7 @@ export function FertilityCard() {
 
   if (prediction.isLoading) {
     return (
-      <div className="skeleton card w-full max-w-md bg-base-100 shadow-xl h-36"></div>
+      <div className="skeleton card w-full bg-base-100 shadow-xl h-36"></div>
     );
   }
 
@@ -86,24 +95,12 @@ export function FertilityCard() {
   };
 
   return (
-    <div className="card w-full max-w-md bg-base-100 shadow-xl">
+    <div className="card w-full bg-base-100 shadow-xl">
       <div className="card-body">
         <div className="flex items-start justify-between">
           <h2 className="card-title text-base font-medium text-base-content/70">
-            Fertility Prediction
+            Fertility Estimate
           </h2>
-          {/* TODO: fix overflow on mobile issue due to the tooltip */}
-          {/* <div
-            className="tooltip"
-            data-tip=""
-          >
-            <div className='tooltip-content'>
-              <div className='px-1'>
-                Predictions are estimates based on your average cycle and should not be used as a form of birth control.
-              </div>
-            </div>
-            <Info size={18} className="text-base-content/50 cursor-help" />
-          </div>*/}
         </div>
 
         <div className="flex items-center gap-4 mt-2">
@@ -119,6 +116,9 @@ export function FertilityCard() {
             <p className="text-sm text-base-content/80">{description}</p>
           </div>
         </div>
+        <p className="mt-3 text-xs text-base-content/70">
+          Estimates only. Do not use for contraception, pregnancy planning, or medical decisions.
+        </p>
       </div>
     </div>
   );

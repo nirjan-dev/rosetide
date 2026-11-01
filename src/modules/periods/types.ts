@@ -12,7 +12,7 @@ export type Period = z.infer<typeof periodSchema>;
 // Schema for a single day's log within a period cycle.
 export const periodDaySchema = z.object({
   id: z.number().optional(), // Dexie handles auto-incrementing
-  periodId: z.number(), // Foreign key to the Cycle table
+  periodId: z.number(), // Foreign key to the Period table
   date: z.date(),
   flowIntensity: z.number().min(1).max(5),
 });

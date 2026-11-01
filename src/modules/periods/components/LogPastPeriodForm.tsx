@@ -3,7 +3,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { format, startOfToday } from "date-fns";
 import type { FC } from "react";
+import type { Period } from "@/modules/periods/types";
+import { periodSchema } from "@/modules/periods/types";
 import { db } from "@/lib/db";
+import { parseLocalDateString } from "@/utils/datetime";
 
 // Cross-field validation is handled by the form logic itself.
 const PastCycleFieldSchema = z
@@ -25,11 +28,15 @@ const useAddPastPeriod = () => {
 
   return useMutation({
     mutationFn: async (newCycle: PastCycle) => {
-      // Convert string dates from the form into Date objects for the database
-      return db.periods.add({
-        startDate: new Date(newCycle.startDate),
-        endDate: new Date(newCycle.endDate),
-      });
+      const startDate = parseLocalDateString(newCycle.startDate);
+      const endDate = parseLocalDateString(newCycle.endDate);
+      if (!startDate || !endDate) {
+        throw new Error('Please select valid start and end dates.');
+      }
+      const validatedPeriod = periodSchema
+        .omit({ id: true })
+        .parse({ startDate, endDate });
+      return db.periods.add(validatedPeriod as Period);
     },
     onSuccess: () => {
       return queryClient.invalidateQueries({ queryKey: ["periods"] });

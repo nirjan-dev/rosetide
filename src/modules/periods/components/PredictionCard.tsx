@@ -74,7 +74,7 @@ export const PredictionCard = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body items-center text-center">
             <p className="text-base-content/70">
-              Your next period is predicted around...
+              Your next period is estimated around...
             </p>
 
             {predictedStartDate && (
@@ -96,6 +96,9 @@ export const PredictionCard = () => {
                 Confidence: {confidenceLevel}
               </span>
             </div>
+            <p className="mt-3 text-xs text-base-content/70">
+              Estimates only. Do not use for contraception, pregnancy planning, or medical decisions.
+            </p>
           </div>
         </div>
       )}

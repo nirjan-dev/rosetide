@@ -3,6 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+const e2ePort = process.env.E2E_PORT ?? '3000';
+const e2eBaseURL = `http://localhost:${e2ePort}`;
 export default defineConfig({
   // Directory where the test files are located.
   testDir: './tests',
@@ -25,7 +27,7 @@ export default defineConfig({
   // Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions.
   use: {
     // Base URL to use in actions like `await page.goto('/')`.
-    baseURL: 'http://localhost:3000',
+    baseURL: e2eBaseURL,
 
     // Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer
     trace: 'on-first-retry',
@@ -46,8 +48,8 @@ export default defineConfig({
 
   // Run the local dev server before starting the tests.
   webServer: {
-    command: 'pnpm run dev',
-    url: 'http://localhost:3000',
+    command: `pnpm dev --port ${e2ePort}`,
+    url: e2eBaseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // Give the server 2 minutes to start up
   },

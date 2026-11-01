@@ -1,4 +1,6 @@
 import { db } from './db';
+import { periodDaySchema, periodSchema } from '@/modules/periods/types';
+import { parseLocalDateString, toLocalDateString } from '@/utils/datetime';
 
 export interface ImportResult {
   imported: number;
@@ -8,16 +10,12 @@ export interface ImportResult {
 
 function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
-  const date = new Date(dateStr);
-  return isNaN(date.getTime()) ? null : date;
+  return parseLocalDateString(dateStr);
 }
 
-function normalizeDate(date: Date): number {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+function normalizeDate(date: Date): string {
+  return toLocalDateString(date);
 }
-
 export async function importFromCSV(csvContent: string): Promise<ImportResult> {
   const result: ImportResult = { imported: 0, skipped: 0, errors: [] };
   
@@ -42,67 +40,84 @@ export async function importFromCSV(csvContent: string): Promise<ImportResult> {
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    
+
     const values = parseCSVLine(line);
     if (values.length < 4) {
       result.errors.push(`Row ${i + 1}: Invalid number of columns`);
       continue;
     }
-    
+
     const [periodStartStr, periodEndStr, dayDateStr, flowStr] = values;
     const periodStart = parseDate(periodStartStr);
     const periodEnd = periodEndStr ? parseDate(periodEndStr) : null;
-    const dayDate = parseDate(dayDateStr);
-    const flowIntensity = parseInt(flowStr, 10);
-    
+    const dayDate = dayDateStr ? parseDate(dayDateStr) : null;
+    const flowIntensity = flowStr ? parseInt(flowStr, 10) : NaN;
+
     if (!periodStart) {
       result.errors.push(`Row ${i + 1}: Invalid period_start_date`);
       continue;
     }
-    
+    if (periodEndStr && !periodEnd) {
+      result.errors.push(`Row ${i + 1}: Invalid period_end_date`);
+      continue;
+    }
+    if (periodEnd && periodEnd < periodStart) {
+      result.errors.push(`Row ${i + 1}: period_end_date is before period_start_date`);
+      continue;
+    }
+    if (dayDateStr && !dayDate) {
+      result.errors.push(`Row ${i + 1}: Invalid day_date`);
+      continue;
+    }
     if (dayDate && (isNaN(flowIntensity) || flowIntensity < 1 || flowIntensity > 5)) {
       result.errors.push(`Row ${i + 1}: flow_intensity must be between 1 and 5`);
       continue;
     }
-    
-    const periodKey = `${normalizeDate(periodStart)}-${periodEnd ? normalizeDate(periodEnd) : ''}`;
+
+    const startDay = normalizeDate(periodStart);
+    const periodKey = `${startDay}-${periodEnd ? normalizeDate(periodEnd) : ''}`;
     let periodId: number | undefined = periodMap.get(periodKey);
-    
+
     if (periodId === undefined) {
       const allPeriods = await db.periods.toArray();
-      const existingPeriod = allPeriods.find(p => normalizeDate(p.startDate) === normalizeDate(periodStart));
-      
+      const existingPeriod = allPeriods.find(p => normalizeDate(p.startDate) === startDay);
+
       if (existingPeriod?.id !== undefined) {
         periodId = existingPeriod.id;
+        const existingEndDay = existingPeriod.endDate ? normalizeDate(existingPeriod.endDate) : '';
+        const importedEndDay = periodEnd ? normalizeDate(periodEnd) : '';
+        if (existingEndDay !== importedEndDay) {
+          result.errors.push(`Row ${i + 1}: Conflicting end date for period starting ${startDay}`);
+          continue;
+        }
       } else {
-        const newId = await db.periods.add({
-          startDate: periodStart,
-          endDate: periodEnd ?? undefined,
-        });
+        const validatedPeriod = periodSchema
+          .omit({ id: true })
+          .parse({ startDate: periodStart, endDate: periodEnd ?? undefined });
+        const newId = await db.periods.add(validatedPeriod);
         periodId = newId as number;
       }
       periodMap.set(periodKey, periodId);
     }
-    
+
     if (dayDate) {
       const allDays = await db.periodDays.toArray();
       const normalizedDayDate = normalizeDate(dayDate);
       const existingDay = allDays.find(d => d.periodId === periodId && normalizeDate(new Date(d.date)) === normalizedDayDate);
-      
+
       if (existingDay) {
         result.skipped++;
         continue;
       }
 
-      await db.periodDays.add({
-        periodId: periodId,
-        date: dayDate,
-        flowIntensity,
-      });
+      const validatedDay = periodDaySchema
+        .omit({ id: true })
+        .parse({ periodId, date: dayDate, flowIntensity });
+      await db.periodDays.add(validatedDay);
       result.imported++;
     }
   }
-  
+
   return result;
 }
 

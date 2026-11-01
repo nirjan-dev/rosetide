@@ -1,3 +1,5 @@
+import { db } from '@/lib/db';
+
 export interface StorageStatus {
   persisted: boolean;
   isRequesting: boolean;
@@ -13,9 +15,12 @@ export async function requestPersistedStorage(): Promise<boolean> {
   if (typeof navigator === 'undefined' || !('storage' in navigator)) {
     return false;
   }
-  
+
   try {
-    return await navigator.storage.persisted();
+    if (typeof navigator.storage.persist !== 'function') {
+      return await navigator.storage.persisted();
+    }
+    return await navigator.storage.persist();
   } catch {
     return false;
   }
@@ -64,4 +69,10 @@ export function getLastExportDate(): string | null {
 
 export function setLastExportDate(date: Date): void {
   localStorage.setItem(LAST_EXPORT_KEY, date.toISOString());
+}
+
+export async function deleteAllLocalData(): Promise<void> {
+  db.close();
+  await db.delete();
+  localStorage.removeItem(LAST_EXPORT_KEY);
 }

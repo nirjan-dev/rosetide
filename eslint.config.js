@@ -7,6 +7,9 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig(
+  {
+    ignores: ['dist/**', 'public/sw.js'],
+  },
   eslint.configs.recommended,
   tseslint.configs.strict,
   tseslint.configs.stylisticTypeChecked,

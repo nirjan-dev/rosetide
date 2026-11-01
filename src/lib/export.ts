@@ -1,13 +1,14 @@
 import { db } from './db';
+import { parseLocalDateString, toLocalDateString } from '@/utils/datetime';
 
 function formatDate(date: Date | string | undefined): string {
   if (!date) return '';
   if (typeof date === 'string') {
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return '';
-    return d.toISOString().split('T')[0];
+    const parsed = parseLocalDateString(date) ?? new Date(date);
+    if (isNaN(parsed.getTime())) return '';
+    return toLocalDateString(parsed);
   }
-  return date.toISOString().split('T')[0];
+  return toLocalDateString(date);
 }
 
 function escapeCSV(value: string): string {

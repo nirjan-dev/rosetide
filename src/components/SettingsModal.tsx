@@ -3,7 +3,7 @@ import { AlertCircle, CheckCircle, Download, HardDrive, Upload } from 'lucide-re
 import { format } from 'date-fns';
 import { downloadCSV, exportToCSV } from '@/lib/export';
 import { importFromCSV } from '@/lib/import';
-import { checkPersistedStorage, getLastExportDate, getStorageEstimate, setLastExportDate } from '@/lib/storage';
+import { checkPersistedStorage, getLastExportDate, getStorageEstimate, requestPersistedStorage, setLastExportDate } from '@/lib/storage';
 
 interface ImportResult {
   imported: number;
@@ -47,6 +47,12 @@ export function SettingsModal() {
   const closeModal = () => {
     setImportResult(null);
     modalRef.current?.close();
+  };
+
+  const handleRequestPersistedStorage = async () => {
+    setStorageStatus({ persisted: false, isRequesting: true });
+    const persisted = await requestPersistedStorage();
+    setStorageStatus({ persisted, isRequesting: false });
   };
 
   const handleExport = async () => {
@@ -106,6 +112,9 @@ export function SettingsModal() {
                 <HardDrive className="w-4 h-4" />
                 <span className="font-medium">Storage</span>
               </div>
+              <p className="text-sm opacity-70">
+                Records stay in this browser. They can be lost if browser data is cleared or this device changes. CSV export is your manual backup.
+              </p>
               {storageEstimate && (
                 <p className="text-sm opacity-70">
                   Using {formatBytes(storageEstimate.usage)} of {formatBytes(storageEstimate.quota)} ({storageEstimate.percentage.toFixed(1)}%)
@@ -119,10 +128,20 @@ export function SettingsModal() {
                       Protected from automatic cleanup
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      May be cleared if device runs low on storage
-                    </span>
+                    <div className="space-y-2">
+                      <span className="flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        May be cleared if device runs low on storage
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-xs"
+                        onClick={handleRequestPersistedStorage}
+                        disabled={storageStatus.isRequesting}
+                      >
+                        {storageStatus.isRequesting ? 'Requesting…' : 'Ask browser to protect storage'}
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
@@ -190,14 +209,21 @@ export function SettingsModal() {
               {importResult && (
                 <div className={`text-sm ${importResult.errors.length > 0 ? 'text-warning' : 'text-success'}`}>
                   {importResult.errors.length > 0 ? (
-                    <span className="flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      Import failed: {importResult.errors[0]}
-                    </span>
+                    <div className="space-y-1">
+                      <span className="flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        Imported {importResult.imported}, skipped {importResult.skipped}. Fix {importResult.errors.length} row{importResult.errors.length === 1 ? '' : 's'}:
+                      </span>
+                      <ul className="list-disc pl-5">
+                        {importResult.errors.slice(0, 3).map(error => (
+                          <li key={error}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
                   ) : (
                     <span className="flex items-center gap-1">
                       <CheckCircle className="w-4 h-4" />
-                      Import completed successfully
+                      Import completed: {importResult.imported} added, {importResult.skipped} skipped.
                     </span>
                   )}
                 </div>

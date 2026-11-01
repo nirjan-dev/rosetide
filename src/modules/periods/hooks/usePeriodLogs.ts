@@ -79,7 +79,11 @@ export function useAddPeriodDay() {
   return useMutation({
     mutationFn: async (newDay: Omit<PeriodDay, 'id'>) => {
       const validatedDay = periodDaySchema.omit({ id: true }).parse(newDay);
-      return await db.periodDays.add(validatedDay as PeriodDay);
+      return await db.transaction('rw', db.periods, db.periodDays, async () => {
+        const parent = await db.periods.get(validatedDay.periodId);
+        if (!parent) return undefined;
+        return await db.periodDays.add(validatedDay as PeriodDay);
+      });
     },
   });
 }
@@ -88,9 +92,12 @@ export function useCancelPeriod() {
   return useMutation({
     mutationFn: async (periodId: number) => {
       return await db.transaction('rw', db.periods, db.periodDays, async () => {
-        await db.periodDays.where('cycleId').equals(periodId).delete();
+        await db.periodDays.where('periodId').equals(periodId).delete();
         await db.periods.delete(periodId);
       });
+    },
+    onError: (error) => {
+      console.error('Failed to cancel period:', error);
     },
   });
 }

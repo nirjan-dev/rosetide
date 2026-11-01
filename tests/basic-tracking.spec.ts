@@ -4,7 +4,7 @@ test.describe('Basic Period Tracking Feature', () => {
   // Before each test, we clear the IndexedDB to ensure a clean state.
   // This is crucial for test isolation and reliability.
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/app');
     await page.evaluate(async () => {
       const databases = await window.indexedDB.databases();
       await Promise.all(
@@ -21,7 +21,7 @@ test.describe('Basic Period Tracking Feature', () => {
   test('should allow a user to log a full period cycle from start to finish', async ({
     page,
   }) => {
-    await page.goto('/');
+    await page.goto('/app');
 
     // We use a case-insensitive regex to make the selector more resilient.
     const startButton = page.getByRole('button', { name: /start period/i });
@@ -57,12 +57,44 @@ test.describe('Basic Period Tracking Feature', () => {
   test('should show an "insufficient data" message when there are less than two periods', async ({
     page,
   }) => {
-    await page.goto('/');
+    await page.goto('/app');
 
     // Check for the "insufficient data" message.
     const insufficientDataMessage = page.getByText(
       'Log at least two full periods to see your next period prediction.',
     );
     await expect(insufficientDataMessage).toBeVisible();
+  });
+
+  test('should cancel a same-day period without leaving records after reload', async ({
+    page,
+  }) => {
+    await page.goto('/app');
+    const startButton = page.getByRole('button', { name: /start period/i });
+    await startButton.click();
+    await page.getByRole('button', { name: /cancel period/i }).click();
+    await expect(startButton).toBeVisible();
+    await page.reload();
+    await expect(startButton).toBeVisible();
+
+    const counts = await page.evaluate(async () => {
+      const openRequest = window.indexedDB.open('periodos_db');
+      const database = await new Promise<IDBDatabase>((resolve, reject) => {
+        openRequest.onsuccess = () => resolve(openRequest.result);
+        openRequest.onerror = () => reject(openRequest.error);
+      });
+      const readAll = (store: string) =>
+        new Promise<Array<unknown>>((resolve, reject) => {
+          const transaction = database.transaction(store, 'readonly');
+          const request = transaction.objectStore(store).getAll();
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      const periods = await readAll('periods');
+      const days = await readAll('periodDays');
+      database.close();
+      return { periods: periods.length, days: days.length };
+    });
+    expect(counts).toEqual({ periods: 0, days: 0 });
   });
 });

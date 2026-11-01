@@ -78,12 +78,12 @@ export function CalendarView({
   const handleNextMonth = () => onMonthChange(new Date(year, month + 1, 1));
 
   return (
-    <div className={`card w-full max-w-md bg-base-100 shadow-xl ${className}`}>
+    <div className={`card w-full bg-base-100 shadow-xl ${className}`}>
       <div className="card-body">
         {/* Header */}
         <div className="flex items-center justify-between pb-4">
           <button
-            className="btn btn-ghost btn-circle"
+            className="btn btn-ghost btn-circle min-h-11 min-w-11"
             onClick={handlePrevMonth}
             aria-label="Previous month"
           >
@@ -96,7 +96,7 @@ export function CalendarView({
             })}
           </h2>
           <button
-            className="btn btn-ghost btn-circle"
+            className="btn btn-ghost btn-circle min-h-11 min-w-11"
             onClick={handleNextMonth}
             aria-label="Next month"
           >
