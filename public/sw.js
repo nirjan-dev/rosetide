@@ -46,7 +46,9 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      // cache: 'reload' skips (and overwrites) any stale HTTP-cached response for this URL,
+      // e.g. permanent redirects remembered from an earlier broken deploy.
+      fetch(new Request(request, { cache: 'reload' }))
         .then((response) => {
           event.waitUntil(cacheIfValid(SHELL_URL, response.clone()));
           return response;

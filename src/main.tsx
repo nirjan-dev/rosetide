@@ -10,6 +10,13 @@ import { captureInstallPrompt } from './lib/installPrompt';
 
 captureInstallPrompt();
 
+// The installed app is the tracker. If it launches on the landing page (an old
+// shortcut, or a stale cached redirect from an earlier deploy), start on /app.
+// Runs once at startup only, so in-app navigation to the landing page still works.
+if (window.matchMedia('(display-mode: standalone)').matches && window.location.pathname === '/') {
+  window.history.replaceState(window.history.state, '', '/app');
+}
+
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext();
 const router = createRouter({
   routeTree,
