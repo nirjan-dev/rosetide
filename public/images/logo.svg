@@ -1,17 +1,22 @@
 <svg viewBox="75 50 50 65" xmlns="http://www.w3.org/2000/svg">
-  <!-- Crescent moon -->
-  <path d="M 100 55 A 28 28 0 1 0 100 111 A 22 22 0 1 1 100 55 Z" 
-        fill="#f9a8d4"/>
-  
+  <defs>
+    <mask id="mooncut">
+      <circle cx="100" cy="83" r="26" fill="white"/>
+      <circle cx="111" cy="75" r="22" fill="black"/>
+    </mask>
+  </defs>
+  <!-- Crescent moon backdrop -->
+  <circle cx="100" cy="83" r="26" fill="#f9a8d4" mask="url(#mooncut)"/>
+
   <!-- Top row of calendar dots -->
   <circle cx="85" cy="70" r="3" fill="#831843" opacity="0.6"/>
   <circle cx="100" cy="70" r="3" fill="#831843" opacity="0.6"/>
   <circle cx="115" cy="70" r="3" fill="#831843" opacity="0.6"/>
-  
+
   <!-- Wave in the middle replacing middle row -->
-  <path d="M 85 83 Q 92.5 78 100 83 T 115 83" 
+  <path d="M 85 83 Q 92.5 78 100 83 T 115 83"
         stroke="#fda4af" stroke-width="4" fill="none" stroke-linecap="round"/>
-  
+
   <!-- Bottom row of calendar dots -->
   <circle cx="85" cy="96" r="3" fill="#f9a8d4" opacity="0.5"/>
   <circle cx="100" cy="96" r="3" fill="#f9a8d4" opacity="0.5"/>
