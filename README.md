@@ -16,8 +16,10 @@ Live app: https://rosetide.net
 - Period records live in browser IndexedDB (`periodos_db`) on the same origin.
 - No account, sync backend, or automatic cloud backup.
 - Clearing browser data or switching browsers/devices starts empty.
-- CSV export/import is the manual backup path.
-- Browser storage can be evicted under low-storage pressure; settings can request persisted storage where supported.
+- Restore points (`src/lib/restorePoints.ts`) are automatic copies in a separate IndexedDB (`rosetide_restore_points`): one per day when records changed (last 7 kept) and one before each import, period deletion or restore (last 3 kept). Restore replaces all records after saving a copy of the current ones. They share the browser's storage, so they undo mistakes but don't survive cleared site data.
+- A backup file (CSV, `src/lib/backupFile.ts`) is the copy that leaves the browser: download it, or send it through the share sheet (Drive, email) where supported. The last save date is stored under `periodos_last_export` and shown on the tracker; a reminder appears when there are records and no backup file in 30 days ("Not now" snoozes it for 7). A website can't write files outside the browser on its own, so this step needs a tap.
+- Browser storage can be evicted under low-storage pressure. The installed app requests persisted storage on every launch; in a tab, Settings can request it.
+- "Delete all my data" removes records, restore points, the earliest-build database and backup/reminder dates.
 - Estimates are calendar math only, not medical advice, contraception, or pregnancy planning.
 
 ### Older versions and old addresses

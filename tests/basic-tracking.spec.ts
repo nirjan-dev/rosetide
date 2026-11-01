@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 test.describe('Basic Period Tracking Feature', () => {
   // Before each test, we clear the IndexedDB to ensure a clean state.
@@ -213,5 +214,108 @@ test.describe('Basic Period Tracking Feature', () => {
     await page.getByRole('tab', { name: 'History' }).click();
     await expect(page.getByText('October 23, 2025')).toBeVisible();
     await expect(page.getByText('October 25, 2025')).toBeVisible();
+  });
+
+  // Starts from a clean browser with records saved in the current format.
+  const seedPeriods = async (page: Page, periods: Array<[string, string]>) => {
+    await page.goto('/');
+    await page.evaluate(async (rows) => {
+      for (const { name } of await window.indexedDB.databases()) {
+        if (!name) continue;
+        await new Promise((resolve) => {
+          const request = window.indexedDB.deleteDatabase(name);
+          request.onsuccess = request.onerror = request.onblocked = resolve;
+        });
+      }
+      window.localStorage.clear();
+      const database = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = window.indexedDB.open('periodos_db', 10);
+        request.onupgradeneeded = () => {
+          const periodStore = request.result.createObjectStore('periods', { keyPath: 'id', autoIncrement: true });
+          periodStore.createIndex('startDate', 'startDate');
+          periodStore.createIndex('endDate', 'endDate');
+          const days = request.result.createObjectStore('periodDays', { keyPath: 'id', autoIncrement: true });
+          days.createIndex('periodId', 'periodId');
+          days.createIndex('date', 'date');
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      await new Promise((resolve, reject) => {
+        const transaction = database.transaction('periods', 'readwrite');
+        for (const [start, end] of rows) {
+          const [sy, sm, sd] = start.split('-').map(Number);
+          const [ey, em, ed] = end.split('-').map(Number);
+          transaction.objectStore('periods').add({ startDate: new Date(sy, sm - 1, sd), endDate: new Date(ey, em - 1, ed) });
+        }
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error);
+      });
+      database.close();
+    }, periods);
+  };
+
+  test('should restore records after a deletion from a restore point', async ({ page }) => {
+    await seedPeriods(page, [
+      ['2026-08-03', '2026-08-07'],
+      ['2026-09-01', '2026-09-05'],
+    ]);
+    await page.goto('/app');
+    // The daily restore point is taken when the tracker opens.
+    await expect(page.getByText('Last restore point: today')).toBeVisible();
+
+    await page.getByRole('tab', { name: 'History' }).click();
+    await page.getByRole('row', { name: /August 3, 2026/ }).getByRole('button', { name: 'Delete' }).click();
+    await page.locator('#delete_period_modal').getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText('August 3, 2026')).toBeHidden();
+
+    await page.getByRole('button', { name: 'Settings & Backup' }).click();
+    const restorePoints = page.getByRole('list', { name: 'Restore points' });
+    await restorePoints.getByRole('button', { name: 'Restore' }).first().click();
+    await page.getByRole('button', { name: 'Yes, restore' }).click();
+    await expect(page.getByText('Restored.')).toBeVisible();
+    // The records from just before the restore are kept as their own restore point.
+    await expect(restorePoints.getByText('Before a restore')).toBeVisible();
+    await page.locator('#settings_modal').getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(page.getByText('August 3, 2026')).toBeVisible();
+    await expect(page.getByText('September 1, 2026')).toBeVisible();
+
+    // Deleting all data removes restore points too.
+    await page.getByRole('button', { name: 'Settings & Backup' }).click();
+    await page.getByRole('button', { name: 'Delete all my data' }).click();
+    await page.getByRole('button', { name: 'Yes, delete everything' }).click();
+    await expect(page.getByRole('button', { name: 'Start Period' })).toBeVisible();
+    await page.getByRole('button', { name: 'Settings & Backup' }).click();
+    await expect(page.getByText('No restore points yet.')).toBeVisible();
+  });
+
+  test('should remind about backup files and show when the last one was saved', async ({ page }) => {
+    await seedPeriods(page, [['2026-09-01', '2026-09-05']]);
+    await page.goto('/app');
+    const reminder = page.getByRole('region', { name: 'Backup reminder' });
+    await expect(reminder).toBeVisible();
+    const backupStatus = page.getByRole('status', { name: 'Backup status' });
+    await expect(backupStatus).toContainText('Last backup file: never');
+
+    await reminder.getByRole('button', { name: 'Not now' }).click();
+    await expect(reminder).toBeHidden();
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Start Period' })).toBeVisible();
+    await expect(reminder).toBeHidden();
+
+    // Saving a backup file from Settings records the date and keeps the reminder away.
+    await page.getByRole('button', { name: 'Settings & Backup' }).click();
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Save backup file' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/^periodos-backup-\d{4}-\d{2}-\d{2}\.csv$/);
+    await page.locator('#settings_modal').getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(backupStatus).toContainText('Last backup file: today');
+
+    await page.evaluate(() => window.localStorage.removeItem('rosetide_backup_reminder_snoozed_until'));
+    await page.reload();
+    await expect(backupStatus).toContainText('Last backup file: today');
+    await expect(reminder).toBeHidden();
   });
 });

@@ -33,19 +33,26 @@ function PrivacyPage() {
       <h2>What this does not mean</h2>
       <ul>
         <li>It is not encrypted secure storage; anyone with access to this browser profile may see it.</li>
-        <li>It is not automatic backup; clearing browser data can remove it.</li>
-        <li>It is not cross-device; each browser starts empty unless you restore CSV.</li>
+        <li>Automatic restore points live in this browser too, so clearing browser data removes them along with your records.</li>
+        <li>It is not cross-device; each browser starts empty unless you import a backup file.</li>
       </ul>
       <h2>Backups</h2>
       <p>
-        CSV export creates a portable backup. Import restores the same dates, skips duplicates, and
-        reports invalid rows. Export before clearing browser data or changing devices.
+        Restore points are saved automatically: one each day your records change (the last 7 are
+        kept) and one before every import, deletion or restore (the last 3 are kept). They let you
+        undo mistakes from Settings &amp; Backup. Delete all my data removes them too.
+      </p>
+      <p>
+        A backup file is the copy that survives cleared browser data or a new phone. Save it to the
+        device, or send it to Drive or email from the share sheet. The tracker shows when you last
+        saved one and reminds you when it&apos;s been a while. Import restores the same dates, skips
+        duplicates, and reports invalid rows.
       </p>
       <h2>Storage durability</h2>
       <p>
-        Browsers may clear site storage under low-storage pressure. Settings shows whether storage
-        is protected and can ask the browser to protect it. Protection is a browser decision, not a
-        guarantee.
+        Browsers may clear site storage under low-storage pressure. The installed app asks the
+        browser to protect its storage automatically; in a browser tab, Settings can ask too.
+        Protection is a browser decision, not a guarantee.
       </p>
       <h2>Analytics and tracking</h2>
       <p>

@@ -1,10 +1,27 @@
-import { useRef, useState } from 'react';
-import { AlertCircle, CheckCircle, Download, HardDrive, Trash2, Upload } from 'lucide-react';
+import { useRef, useState, useSyncExternalStore } from 'react';
+import { AlertCircle, CheckCircle, Download, HardDrive, History, Trash2, Upload } from 'lucide-react';
 import { format } from 'date-fns';
-import { downloadCSV, exportToCSV } from '@/lib/export';
+import { useLiveQuery } from 'dexie-react-hooks';
+import type { RestorePointReason } from '@/lib/restorePoints';
+import {
+  canShareBackupFile,
+  getLastBackupFileDate,
+  saveBackupFile,
+  shareBackupFile,
+  subscribeBackupFile,
+} from '@/lib/backupFile';
 import { importFromCSV } from '@/lib/import';
-import { checkPersistedStorage, deleteAllLocalData, getLastExportDate, getStorageEstimate, requestPersistedStorage, setLastExportDate } from '@/lib/storage';
+import { createSafetyRestorePoint, restoreFromRestorePoint, restorePointDb } from '@/lib/restorePoints';
+import { checkPersistedStorage, deleteAllLocalData, getStorageEstimate, requestPersistedStorage } from '@/lib/storage';
 import { formatBytes } from '@/utils/formatBytes';
+import { friendlyDate } from '@/utils/friendlyDate';
+
+const RESTORE_POINT_LABELS: Record<RestorePointReason, string> = {
+  daily: 'Daily copy',
+  'before-import': 'Before an import',
+  'before-delete': 'Before deleting a period',
+  'before-restore': 'Before a restore',
+};
 
 interface ImportResult {
   imported: number;
@@ -20,12 +37,17 @@ interface StorageEstimate {
 
 export function SettingsModal() {
   const modalRef = useRef<HTMLDialogElement>(null);
-  const [isExporting, setIsExporting] = useState(false);
+  const [isSavingBackup, setIsSavingBackup] = useState(false);
+  const [backupError, setBackupError] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [storageStatus, setStorageStatus] = useState<{ persisted: boolean; isRequesting: boolean } | null>(null);
   const [storageEstimate, setStorageEstimate] = useState<StorageEstimate | null>(null);
-  const [lastExport, setLastExport] = useState<string | null>(null);
+  const lastBackupFile = useSyncExternalStore(subscribeBackupFile, getLastBackupFileDate);
+  const restorePoints = useLiveQuery(() => restorePointDb.restorePoints.orderBy('createdAt').reverse().toArray());
+  const [confirmingRestoreId, setConfirmingRestoreId] = useState<number | null>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [restoreMessage, setRestoreMessage] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const openModal = async () => {
@@ -34,12 +56,13 @@ export function SettingsModal() {
     setStorageStatus(status);
     const estimate = await getStorageEstimate();
     setStorageEstimate(estimate);
-    const last = getLastExportDate();
-    setLastExport(last);
   };
 
   const closeModal = () => {
     setImportResult(null);
+    setBackupError('');
+    setConfirmingRestoreId(null);
+    setRestoreMessage('');
     setConfirmingDelete(false);
     modalRef.current?.close();
   };
@@ -62,19 +85,31 @@ export function SettingsModal() {
     setStorageStatus({ persisted, isRequesting: false });
   };
 
-  const handleExport = async () => {
-    setIsExporting(true);
+  const handleBackup = async (action: () => Promise<unknown>) => {
+    setIsSavingBackup(true);
+    setBackupError('');
     try {
-      const csv = await exportToCSV();
-      const date = new Date();
-      const filename = `periodos-backup-${format(date, 'yyyy-MM-dd')}.csv`;
-      downloadCSV(csv, filename);
-      setLastExportDate(date);
-      setLastExport(date.toISOString());
+      await action();
     } catch (error) {
-      console.error('Export failed:', error);
+      console.error('Backup failed:', error);
+      setBackupError(error instanceof Error ? error.message : String(error));
     } finally {
-      setIsExporting(false);
+      setIsSavingBackup(false);
+    }
+  };
+
+  const handleRestore = async (id: number) => {
+    setIsRestoring(true);
+    setRestoreMessage('');
+    try {
+      await restoreFromRestorePoint(id);
+      setRestoreMessage('Restored. A copy of your records from just before is in the list, in case you want them back.');
+    } catch (error) {
+      console.error('Restore failed:', error);
+      setRestoreMessage(`Restore failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsRestoring(false);
+      setConfirmingRestoreId(null);
     }
   };
 
@@ -89,6 +124,7 @@ export function SettingsModal() {
 
     try {
       const text = await file.text();
+      await createSafetyRestorePoint('before-import');
       const result = await importFromCSV(text);
       setImportResult(result);
     } catch (error) {
@@ -120,7 +156,7 @@ export function SettingsModal() {
                 <span className="font-medium">Storage</span>
               </div>
               <p className="text-sm opacity-70">
-                Records stay in this browser. They can be lost if browser data is cleared or this device changes. CSV export is your manual backup.
+                Records stay in this browser. Restore points below undo mistakes, but they live here too, so keep a backup file for when browser data is cleared or you change phones.
               </p>
               {storageEstimate && (
                 <p className="text-sm opacity-70">
@@ -159,30 +195,39 @@ export function SettingsModal() {
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Download className="w-4 h-4" />
-                <span className="font-medium">Export Data</span>
+                <span className="font-medium">Backup file</span>
               </div>
               <p className="text-sm opacity-70">
-                Download your data as a CSV file. You can open it in spreadsheets or use it to restore your data later.
+                Save a copy of your records outside this browser. You can open it in a spreadsheet, or import it here to bring your records back.
               </p>
-              {lastExport && (
-                <p className="text-xs opacity-60">
-                  Last exported: {format(new Date(lastExport), 'MMM d, yyyy')}
-                </p>
-              )}
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={handleExport}
-                disabled={isExporting}
-              >
-                {isExporting ? (
-                  <span className="loading loading-spinner loading-xs"></span>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    Export to CSV
-                  </>
-                )}
-              </button>
+              <p className="text-sm">
+                Last backup file:{' '}
+                <span className={lastBackupFile ? 'font-semibold' : 'font-semibold text-error'}>
+                  {lastBackupFile
+                    ? `${friendlyDate(new Date(lastBackupFile))}, ${format(new Date(lastBackupFile), 'h:mm a')}`
+                    : 'never'}
+                </span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => void handleBackup(saveBackupFile)}
+                  disabled={isSavingBackup}
+                >
+                  <Download className="w-4 h-4" />
+                  Save backup file
+                </button>
+                {canShareBackupFile() ? (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => void handleBackup(shareBackupFile)}
+                    disabled={isSavingBackup}
+                  >
+                    Send to Drive or email
+                  </button>
+                ) : null}
+              </div>
+              {backupError ? <p className="text-sm text-error">Backup failed: {backupError}</p> : null}
             </div>
 
             <div className="divider"></div>
@@ -241,11 +286,87 @@ export function SettingsModal() {
 
             <div className="space-y-3">
               <div className="flex items-center gap-2">
+                <History className="w-4 h-4" />
+                <span className="font-medium">Restore points</span>
+              </div>
+              <p className="text-sm opacity-70">
+                Rosetide saves a copy of your records each day you change them, and before imports, deletions and restores. It keeps the last 7 daily copies and the last 3 others.
+              </p>
+              {restorePoints === undefined || restorePoints.length === 0 ? (
+                <p className="text-sm opacity-70">No restore points yet. One is saved once you have records.</p>
+              ) : (
+                <ul className="space-y-2" aria-label="Restore points">
+                  {restorePoints.map(({ id, createdAt, reason, periods }) => {
+                    // Points read from the database always have an id.
+                    if (id === undefined) return null;
+                    const confirming = confirmingRestoreId === id;
+                    return (
+                      <li key={id} className="rounded-lg bg-base-200 p-3 text-sm">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span>
+                            <span className="font-semibold">
+                              {friendlyDate(createdAt)}, {format(createdAt, 'h:mm a')}
+                            </span>
+                            <br />
+                            {RESTORE_POINT_LABELS[reason]} · {periods.length} period
+                            {periods.length === 1 ? '' : 's'}
+                          </span>
+                          {confirming ? null : (
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              onClick={() => {
+                                setRestoreMessage('');
+                                setConfirmingRestoreId(id);
+                              }}
+                              disabled={isRestoring}
+                            >
+                              Restore
+                            </button>
+                          )}
+                        </div>
+                        {confirming ? (
+                          <div className="mt-2 space-y-2">
+                            <p className="font-semibold">
+                              Replace your current records with this copy? A copy of your current records is saved first, so you can undo this.
+                            </p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-sm"
+                                onClick={() => void handleRestore(id)}
+                                disabled={isRestoring}
+                              >
+                                {isRestoring ? 'Restoring…' : 'Yes, restore'}
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => setConfirmingRestoreId(null)}
+                                disabled={isRestoring}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {restoreMessage ? <p className="text-sm">{restoreMessage}</p> : null}
+            </div>
+
+            <div className="divider"></div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
                 <Trash2 className="w-4 h-4" />
                 <span className="font-medium">Delete All Data</span>
               </div>
               <p className="text-sm opacity-70">
-                Permanently remove every period and daily log from this browser. Export a CSV backup first if you might want it back.
+                Permanently remove every period, daily log and restore point from this browser. Save a backup file first if you might want them back.
               </p>
               {confirmingDelete ? (
                 <div className="space-y-2">

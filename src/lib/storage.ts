@@ -1,5 +1,8 @@
 import { db } from '@/lib/db';
+import { BACKUP_REMINDER_SNOOZE_KEY } from '@/lib/backupFile';
 import { EARLIEST_DB_NAME, EARLIEST_IMPORTED_KEY } from '@/lib/legacyRescue';
+import { deleteAllRestorePoints } from '@/lib/restorePoints';
+import { LAST_BACKUP_FILE_KEY } from '@/lib/storageNames';
 
 export interface StorageStatus {
   persisted: boolean;
@@ -62,25 +65,27 @@ export async function getStorageEstimate(): Promise<StorageEstimate | null> {
   }
 }
 
-const LAST_EXPORT_KEY = 'periodos_last_export';
-
-export function getLastExportDate(): string | null {
-  return localStorage.getItem(LAST_EXPORT_KEY);
-}
-
-export function setLastExportDate(date: Date): void {
-  localStorage.setItem(LAST_EXPORT_KEY, date.toISOString());
+/**
+ * Installed apps ask once per launch. Chrome decides without a prompt and normally grants
+ * it to installed apps, so their records aren't cleared when the device runs low on space.
+ */
+export async function protectStorageInInstalledApp(): Promise<void> {
+  if (!window.matchMedia('(display-mode: standalone)').matches) return;
+  const { persisted } = await checkPersistedStorage();
+  if (!persisted) await requestPersistedStorage();
 }
 
 export async function deleteAllLocalData(): Promise<void> {
   db.close();
   await db.delete();
+  await deleteAllRestorePoints();
   // Records from the earliest build live in their own database; delete those too.
   await new Promise<void>((resolve, reject) => {
     const req = indexedDB.deleteDatabase(EARLIEST_DB_NAME);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
-  localStorage.removeItem(LAST_EXPORT_KEY);
+  localStorage.removeItem(LAST_BACKUP_FILE_KEY);
+  localStorage.removeItem(BACKUP_REMINDER_SNOOZE_KEY);
   localStorage.removeItem(EARLIEST_IMPORTED_KEY);
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { StorageReport, StoreReport } from '@/lib/storageReport';
 import { MarketingLayout } from '@/components/MarketingLayout';
 import { collectRawBackup, collectStorageReport } from '@/lib/storageReport';
+import { RESTORE_POINTS_DB_NAME } from '@/lib/storageNames';
 import { formatBytes } from '@/utils/formatBytes';
 
 export const Route = createFileRoute('/storage-check')({
@@ -23,7 +24,11 @@ function dateRange(store: StoreReport): string {
 function Summary({ report }: { report: StorageReport }) {
   const tracker = report.databases.find((database) => database.name === 'periodos_db');
   const periods = tracker?.stores.find((store) => store.name === 'periods');
+  const restorePoints = report.databases
+    .find((database) => database.name === RESTORE_POINTS_DB_NAME)
+    ?.stores.find((store) => store.name === 'restorePoints');
   const recordCount = report.databases
+    .filter((database) => database.name !== RESTORE_POINTS_DB_NAME)
     .flatMap((database) => database.stores)
     .reduce((sum, store) => sum + store.count, 0);
 
@@ -35,6 +40,17 @@ function Summary({ report }: { report: StorageReport }) {
           {dateRange(periods)}.
         </strong>{' '}
         Open the tracker to see them.
+      </p>
+    );
+  }
+  if (restorePoints && restorePoints.count > 0) {
+    return (
+      <p>
+        <strong>
+          The tracker is empty, but {restorePoints.count} restore point
+          {restorePoints.count === 1 ? ' was' : 's were'} found{dateRange(restorePoints)}.
+        </strong>{' '}
+        Open the tracker, tap Settings &amp; Backup, and restore the newest one under Restore points.
       </p>
     );
   }

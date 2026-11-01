@@ -1,9 +1,12 @@
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import { BackupReminder } from '@/components/BackupReminder';
+import { BackupStatus } from '@/components/BackupStatus';
 import { DatabaseGate } from '@/components/DatabaseGate';
 import { InstallBanner } from '@/components/InstallBanner';
 import { OldAddressNotice } from '@/components/OldAddressNotice';
 import { SettingsModal } from '@/components/SettingsModal';
+import { useStorageSafeguards } from '@/hooks/useStorageSafeguards';
 import { CalendarView } from '@/modules/periods/components/CalendarView';
 import { FertilityCard } from '@/modules/periods/components/FertilityCard';
 import { LogPastPeriodModal } from '@/modules/periods/components/LogPastPeriodModal';
@@ -48,6 +51,7 @@ function TrackerContent() {
 
   // This hook handles creating a new log for today if a period is active
   useAutomaticDailyLogging();
+  useStorageSafeguards();
 
   const startPeriod = useStartPeriod();
   const endPeriod = useEndPeriod();
@@ -98,6 +102,7 @@ function TrackerContent() {
     <div className="mx-auto w-full max-w-5xl px-4 py-4 sm:px-6 lg:py-8">
       <OldAddressNotice />
       <InstallBanner />
+      <BackupReminder />
       <nav className="mb-6 flex items-center justify-between" aria-label="Tracker">
         <Link to="/" className="link link-hover text-sm">
           ← About Rosetide
@@ -120,6 +125,7 @@ function TrackerContent() {
           <div className="flex flex-col gap-3">
             <LogPastPeriodModal />
             <SettingsModal />
+            <BackupStatus />
           </div>
           <PredictionCard />
           <FertilityCard />

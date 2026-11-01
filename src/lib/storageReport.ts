@@ -4,8 +4,10 @@
  * would create a missing database is aborted before anything is written.
  */
 
+import { LAST_BACKUP_FILE_KEY, RESTORE_POINTS_DB_NAME } from '@/lib/storageNames';
+
 // Databases every Rosetide version has used; probed when the browser can't list databases.
-const KNOWN_DATABASES = ['periodos_db', 'Database'];
+const KNOWN_DATABASES = ['periodos_db', 'Database', RESTORE_POINTS_DB_NAME];
 
 export interface StoreReport {
   name: string;
@@ -74,7 +76,7 @@ async function databaseNames(): Promise<Array<string>> {
 
 function recordDate(record: unknown): Date | null {
   if (typeof record !== 'object' || record === null) return null;
-  for (const field of ['startDate', 'date']) {
+  for (const field of ['startDate', 'date', 'createdAt']) {
     const value: unknown = Reflect.get(record, field);
     if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
   }
@@ -145,7 +147,7 @@ export async function collectStorageReport(): Promise<StorageReport> {
   try {
     const values = readLocalStorage();
     report.localStorageKeys = Object.keys(values);
-    const lastExport = values.periodos_last_export;
+    const lastExport = values[LAST_BACKUP_FILE_KEY];
     if (lastExport) report.lastExport = new Date(lastExport);
   } catch (error) {
     report.errors.push(`Settings: ${error instanceof Error ? error.message : String(error)}`);
