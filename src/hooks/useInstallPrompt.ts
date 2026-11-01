@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
+import { useCallback, useState, useSyncExternalStore } from 'react';
+import {
+  clearInstallPrompt,
+  getInstallPrompt,
+  subscribeInstallPrompt,
+} from '@/lib/installPrompt';
 
 const DISMISSED_KEY = 'rosetide_install_dismissed';
 
@@ -16,10 +16,7 @@ function isStandalone(): boolean {
 }
 
 export function useInstallPrompt() {
-  const [promptApi, setPromptApi] = useState<{
-    prompt: () => Promise<void>;
-    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-  } | null>(null);
+  const promptApi = useSyncExternalStore(subscribeInstallPrompt, getInstallPrompt, () => null);
   const [dismissed, setDismissed] = useState(() => {
     try {
       return localStorage.getItem(DISMISSED_KEY) === '1';
@@ -28,27 +25,12 @@ export function useInstallPrompt() {
     }
   });
 
-  useEffect(() => {
-    if (isStandalone()) return;
-    const handlePrompt = (event: Event) => {
-      event.preventDefault();
-      const installEvent = event as BeforeInstallPromptEvent;
-      setPromptApi({ prompt: () => installEvent.prompt(), userChoice: installEvent.userChoice });
-    };
-    const handleInstalled = () => setPromptApi(null);
-    window.addEventListener('beforeinstallprompt', handlePrompt);
-    window.addEventListener('appinstalled', handleInstalled);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handlePrompt);
-      window.removeEventListener('appinstalled', handleInstalled);
-    };
-  }, []);
-
   const install = useCallback(async () => {
     if (!promptApi) return;
+    // A captured prompt can only be shown once; Chrome fires a fresh event later if needed.
+    clearInstallPrompt();
     await promptApi.prompt();
-    const { outcome } = await promptApi.userChoice;
-    if (outcome === 'accepted') setPromptApi(null);
+    await promptApi.userChoice;
   }, [promptApi]);
 
   const dismiss = useCallback(() => {

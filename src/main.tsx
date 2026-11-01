@@ -6,6 +6,9 @@ import * as TanStackQueryProvider from './integrations/tanstack-query/root-provi
 import { routeTree } from './routeTree.gen'; // Import the generated route tree
 import './styles.css';
 import reportWebVitals from './reportWebVitals.ts';
+import { captureInstallPrompt } from './lib/installPrompt';
+
+captureInstallPrompt();
 
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext();
 const router = createRouter({

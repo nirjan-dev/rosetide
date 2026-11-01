@@ -1,13 +1,28 @@
-/* Rosetide offline shell. Versioned cache; app shell only, never IndexedDB. */
-const CACHE_VERSION = 'rosetide-v1';
-const APP_SHELL = ['/', '/app', '/index.html', '/manifest.json'];
+/* Rosetide offline shell. Versioned CacheStorage only; never touches IndexedDB records. */
+const CACHE_VERSION = 'rosetide-v2';
+// Every route serves the same app HTML, so "/" is the offline shell for all pages.
+const SHELL_URL = '/';
+const PRECACHE = [SHELL_URL, '/manifest.json'];
+
+function isCacheable(response) {
+  return response.ok && !response.redirected && response.type === 'basic';
+}
+
+async function cacheIfValid(key, response) {
+  if (!isCacheable(response)) return;
+  const cache = await caches.open(CACHE_VERSION);
+  await cache.put(key, response);
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE_VERSION)
-      .then((cache) => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting()),
+    Promise.all(
+      PRECACHE.map(async (url) => {
+        const response = await fetch(url, { cache: 'reload' });
+        if (!isCacheable(response)) throw new Error(`Cannot precache ${url}: ${response.status}`);
+        await cacheIfValid(url, response);
+      }),
+    ).then(() => self.skipWaiting()),
   );
 });
 
@@ -33,11 +48,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put('/index.html', copy));
+          event.waitUntil(cacheIfValid(SHELL_URL, response.clone()));
           return response;
         })
-        .catch(() => caches.match('/index.html')),
+        .catch(async () => (await caches.match(SHELL_URL)) ?? Response.error()),
     );
     return;
   }
@@ -48,8 +62,7 @@ self.addEventListener('fetch', (event) => {
         (cached) =>
           cached ??
           fetch(request).then((response) => {
-            const copy = response.clone();
-            caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
+            event.waitUntil(cacheIfValid(request, response.clone()));
             return response;
           }),
       ),
