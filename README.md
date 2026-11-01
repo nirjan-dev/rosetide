@@ -22,9 +22,10 @@ Live app: https://rosetide.net
 
 ### Older versions and old addresses
 
-- Builds from Oct 16 – Nov 8, 2025 stored records in other shapes (a `Database` IndexedDB, then a `cycles` store). Before storage opens, `src/lib/legacyRescue.ts` moves those records into the current schema and keeps the originals as a backup. Opening the current schema without that step makes Dexie delete the old `cycles` store.
-- Never bump or change the Dexie schema without an explicit `version(n + 1)` upgrade: Dexie deletes stores that a same-version schema no longer declares.
-- The app was served from `periodos.nirjan.net` and `periodos.pages.dev` before `rosetide.net`. Browser storage is per address, so records saved there can only be exported from there. Keep those addresses serving the app; never redirect them to rosetide.net.
+- Builds from Oct 16 – Nov 8, 2025 stored records in other shapes (a `Database` IndexedDB, then a `cycles` store). Before storage opens, `src/lib/legacyRescue.ts` moves those records into the current schema and keeps the originals as a backup. Opening the current schema without that step makes Dexie delete the old `cycles` store and `cycleId` index; the rescue also rebuilds periods from daily logs left behind by that.
+- Never bump or change the Dexie schema without an explicit `version(n + 1)` upgrade: Dexie deletes stores and indexes that a same-version schema no longer declares.
+- The app was served from `periodos.nirjan.net` and `periodos.pages.dev` before `rosetide.net` (first certificate Dec 2, 2025, after the Nov 9 schema switch, so rosetide.net only ever held current-format records). Browser storage is per address, so records saved on an old address can only be exported from there. Keep those addresses serving the app; never redirect them to rosetide.net.
+- `/storage-check` is a read-only page listing every database, record count and date range this browser holds for the current address, with a raw JSON download. It never opens Dexie or creates a database; use it to support someone whose records are missing.
 
 ## Run it
 

@@ -187,10 +187,19 @@ export async function rescueLegacyCurrentDatabase(): Promise<void> {
   const hasPeriods = database.objectStoreNames.contains('periods');
   let hasOrphanDays = false;
   if (database.objectStoreNames.contains('periodDays')) {
-    const daysStore = database.transaction('periodDays', 'readonly').objectStore('periodDays');
-    if (daysStore.indexNames.contains('cycleId')) {
-      const legacyDays = (await request(daysStore.index('cycleId').getAll())) as Array<LegacyPeriodDay>;
-      hasOrphanDays = legacyDays.some((day) => typeof day.periodId !== 'number');
+    // Rows without a periodId never appear in the periodId index, so comparing counts is a
+    // cheap check on every launch. Don't rely on the old cycleId index: when a newer build
+    // damaged old records, Dexie deleted that index along with the `cycles` store.
+    const store = database.transaction('periodDays', 'readonly').objectStore('periodDays');
+    const [total, linked] = await Promise.all([
+      request(store.count()),
+      store.indexNames.contains('periodId') ? request(store.index('periodId').count()) : Promise.resolve(0),
+    ]);
+    if (total > linked) {
+      const days = (await request(
+        database.transaction('periodDays', 'readonly').objectStore('periodDays').getAll(),
+      )) as Array<LegacyPeriodDay>;
+      hasOrphanDays = days.some((day) => typeof day.periodId !== 'number' && typeof day.cycleId === 'number');
     }
   }
   const version = database.version;

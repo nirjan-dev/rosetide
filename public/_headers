@@ -12,6 +12,8 @@
   Cache-Control: no-cache
 /about
   Cache-Control: no-cache
+/storage-check
+  Cache-Control: no-cache
 /sw.js
   Cache-Control: no-cache
 

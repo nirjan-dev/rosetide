@@ -172,4 +172,46 @@ test.describe('Basic Period Tracking Feature', () => {
     );
     expect(backupStores).toContain('cycles');
   });
+
+  test('should rebuild periods that an older build already deleted', async ({ page }) => {
+    // Exact state the Nov 9 2025 build leaves after opening Oct 22 – Nov 8 records:
+    // `cycles` store and `cycleId` index deleted, daily logs still carry their cycleId.
+    await page.goto('/');
+    await page.evaluate(async () => {
+      const databases = await window.indexedDB.databases();
+      for (const { name } of databases) {
+        if (!name) continue;
+        await new Promise((resolve) => {
+          const request = window.indexedDB.deleteDatabase(name);
+          request.onsuccess = request.onerror = request.onblocked = resolve;
+        });
+      }
+      const database = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = window.indexedDB.open('periodos_db', 11);
+        request.onupgradeneeded = () => {
+          const periods = request.result.createObjectStore('periods', { keyPath: 'id', autoIncrement: true });
+          periods.createIndex('endDate', 'endDate');
+          periods.createIndex('startDate', 'startDate');
+          const days = request.result.createObjectStore('periodDays', { keyPath: 'id', autoIncrement: true });
+          days.createIndex('date', 'date');
+          days.createIndex('periodId', 'periodId');
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      await new Promise((resolve, reject) => {
+        const transaction = database.transaction('periodDays', 'readwrite');
+        transaction.objectStore('periodDays').add({ cycleId: 1, date: new Date(2025, 9, 23), flowIntensity: 3 });
+        transaction.objectStore('periodDays').add({ cycleId: 1, date: new Date(2025, 9, 25), flowIntensity: 2 });
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error);
+      });
+      database.close();
+    });
+
+    await page.goto('/app');
+    await page.getByRole('tab', { name: 'History' }).click();
+    await expect(page.getByText('October 23, 2025')).toBeVisible();
+    await expect(page.getByText('October 25, 2025')).toBeVisible();
+  });
 });

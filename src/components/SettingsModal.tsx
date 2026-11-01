@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { downloadCSV, exportToCSV } from '@/lib/export';
 import { importFromCSV } from '@/lib/import';
 import { checkPersistedStorage, deleteAllLocalData, getLastExportDate, getStorageEstimate, requestPersistedStorage, setLastExportDate } from '@/lib/storage';
+import { formatBytes } from '@/utils/formatBytes';
 
 interface ImportResult {
   imported: number;
@@ -15,14 +16,6 @@ interface StorageEstimate {
   usage: number;
   quota: number;
   percentage: number;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
 export function SettingsModal() {

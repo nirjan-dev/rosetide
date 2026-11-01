@@ -1,5 +1,6 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Disallow: /app
+Disallow: /storage-check
 
 Sitemap: https://rosetide.net/sitemap.xml
